@@ -1,4 +1,6 @@
-# CRUD Code Test 
+# CRUD Code Test - Amir Mohamadi
+Hi , 
+Exsuce me , I am just change framework to .net 6 because in my labtop there was not installed vs2023 and .net 7 - 
 
 Please read each note very carefully!
 Feel free to add/change project structure to a clean architecture to your view.
