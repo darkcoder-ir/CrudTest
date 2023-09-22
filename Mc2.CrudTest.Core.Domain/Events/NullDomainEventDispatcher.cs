@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Mc2.CrudTest.Core.Domain.Events
 {
-    public class NullDomainEventDispatcher : IDomainEventDispatcher
+    public sealed class NullDomainEventDispatcher : IDomainEventDispatcher
     {
         public Task PublishAsync<TEvent>(TEvent domainEvent) where TEvent : IDomainEvent => Task.CompletedTask;
     }

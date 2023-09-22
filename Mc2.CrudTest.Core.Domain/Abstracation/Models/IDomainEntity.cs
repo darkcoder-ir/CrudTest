@@ -8,6 +8,6 @@ namespace Mc2.CrudTest.Core.Domain.Abstracation.Models
 {
     public interface IDomainEntity
     {
-        public int Id { get; }
+         int Id { get; }
     }
 }
