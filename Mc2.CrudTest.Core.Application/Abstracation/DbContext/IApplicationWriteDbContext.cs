@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using System;
 using System.Collections.Generic;
@@ -13,6 +14,11 @@ namespace Mc2.CrudTest.Core.Application.Abstracation.DbContext
     {
         IDbConnection Connection { get; }
         DbSet<CustomerEntity> Customers { get; }
+        EntityEntry Entry(object entity);
         DatabaseFacade Database { get; }
+
+        EntityEntry<TEntity> Entry<TEntity>(TEntity entity) where TEntity : class;
+
+        Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

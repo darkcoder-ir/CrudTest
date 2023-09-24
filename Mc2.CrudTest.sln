@@ -13,7 +13,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mc2.CrudTest.AcceptanceTest
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mc2.CrudTest.Core.Domain", "Mc2.CrudTest.Core.Domain\Mc2.CrudTest.Core.Domain.csproj", "{FB841FAD-76B0-494D-9119-392ACE7CAE38}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mc2.CrudTest.Core.Application", "Mc2.CrudTest.Core.Application\Mc2.CrudTest.Core.Application.csproj", "{CE3F5F8F-5760-4BB0-A441-0D82D208815E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mc2.CrudTest.Core.Application", "Mc2.CrudTest.Core.Application\Mc2.CrudTest.Core.Application.csproj", "{CE3F5F8F-5760-4BB0-A441-0D82D208815E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mc2.Crud.Persistanse", "Mc2.Crud.Persistanse\Mc2.Crud.Persistanse.csproj", "{70E2BF54-3C98-4960-99B4-85D0988EDAA9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{CE3F5F8F-5760-4BB0-A441-0D82D208815E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CE3F5F8F-5760-4BB0-A441-0D82D208815E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CE3F5F8F-5760-4BB0-A441-0D82D208815E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{70E2BF54-3C98-4960-99B4-85D0988EDAA9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{70E2BF54-3C98-4960-99B4-85D0988EDAA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{70E2BF54-3C98-4960-99B4-85D0988EDAA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{70E2BF54-3C98-4960-99B4-85D0988EDAA9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

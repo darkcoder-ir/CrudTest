@@ -1,4 +1,5 @@
-﻿using Mc2.CrudTest.Core.Domain.Abstracation.Models;
+﻿using Mc2.CrudTest.Core.Application.Models;
+using Mc2.CrudTest.Core.Domain.Abstracation.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
