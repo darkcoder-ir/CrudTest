@@ -1,12 +1,4 @@
-﻿using Mc2.CrudTest.Core.Domain.Abstracation;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Mc2.CrudTest.Core.Domain.Entities;
-
-namespace Mc2.CrudTest.Core.Application.Customer.Command.CreateCustomer
+﻿namespace Mc2.CrudTest.Core.Application.Customer.Command.CreateCustomer
 {
     //public sealed class CreateCustomerCommandHandler :ICommandHandler<CreateCustomerCommand , Guid>
     //{

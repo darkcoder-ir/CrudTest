@@ -16,7 +16,7 @@ namespace Mc2.CrudTest.Presentation.Server.Controllers
         [HttpPost("[action]")]
         public async Task<ActionResult<CustomerViewModel>> AddOrUpdateCustomer([FromBody] CustomerViewModel customer)
         {
-            return Ok(await mediator.Send(new AddOrUpdateCustomerCommand { Customer = customer }));
+            return Ok(await mediator.Send(new CreateCustomerCommand { Customer = customer }));
         }
         [HttpGet("[action]")]
         public async Task<ActionResult<CustomerViewModel>> GetCustomer([FromBody] CustomerViewModel customer) => Ok(await mediator.Send(new GetCustomerQuery() { _Customer=customer  }));

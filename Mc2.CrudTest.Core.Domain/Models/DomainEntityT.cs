@@ -17,19 +17,26 @@ namespace Mc2.CrudTest.Core.Domain.Models
             action(e);
             return e;
         }
-        //reflection clon if need 
+
+
         public virtual void ValidateAggregate()
         {
-        }
+        }//reflection clon if need 
+
         protected TEntity CreateShallowCopy() => (TEntity)MemberwiseClone();
+
         protected void ValidateNotNull(params DomainEntity[] domainEntities)
         {
-            _ = domainEntities ?? throw new ArgumentNullException(nameof(domainEntities));
+           
             if (domainEntities.Any(e => e is null))
             {
                 throw new NullReferenceException($"One or more required child entities for aggregate of type '{typeof(TEntity).Name}' was null.");
             }
         }
-       
+
+        /// <inheritdoc />
+        protected DomainEntity(Guid Id) : base(Id)
+        {
+        }
     }
 }

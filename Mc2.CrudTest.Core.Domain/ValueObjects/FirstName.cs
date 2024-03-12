@@ -11,7 +11,7 @@ namespace Mc2.CrudTest.Core.Domain.ValueObjects
     {
         public const int MaxLenght = 50;
         public string Value { get; }
-
+        public static implicit operator string(FirstName firstName) => firstName.Value;
 
         public override IEnumerable<object> GetAtomicValues()
         {

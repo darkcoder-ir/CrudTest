@@ -19,11 +19,7 @@ namespace Mc2.CrudTest.Core.Application
                 scan
                 .FromCallingAssembly()
 
-                .AddClasses(classes => classes.AssignableTo(typeof(IDbEntityToDomainEntityMapper<,>))).AsImplementedInterfaces().WithSingletonLifetime()
-                .AddClasses(classes => classes.AssignableTo(typeof(IDbEntityToValueObjectMapper<,>))).AsImplementedInterfaces().WithSingletonLifetime()
-
-                .AddClasses(classes => classes.AssignableTo(typeof(IViewModelToDbEntityMapper<,>))).AsImplementedInterfaces().WithSingletonLifetime()
-
+                
             );
 
             if (addValidation)

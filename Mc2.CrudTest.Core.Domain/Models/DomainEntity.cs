@@ -12,7 +12,11 @@ namespace Mc2.CrudTest.Core.Domain.Models
 {
     public abstract class DomainEntity : IDomainEntity
     {
-        public int Id { get; set; }
+        public Guid Id { get; private init; }
+        public DomainEntity(Guid Id)
+        {
+            this.Id = Id;
+        }
         private static IDomainEventDispatcher dispatcher = new NullDomainEventDispatcher();
         private readonly List<IDomainEvent> domainEvents = new List<IDomainEvent>();
         public IReadOnlyCollection<IDomainEvent> DomainEvents => domainEvents.AsReadOnly();
@@ -36,5 +40,7 @@ namespace Mc2.CrudTest.Core.Domain.Models
         public void RemoveDomainEvent(IDomainEvent eventItem) => domainEvents?.Remove(eventItem);
         internal static void WireUpDispatcher(IDomainEventDispatcher dispatcher) => DomainEntity.dispatcher = dispatcher;
 
+        /// <inheritdoc />
+        
     }
 }

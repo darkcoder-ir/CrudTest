@@ -1,55 +1,46 @@
-﻿using Mc2.CrudTest.Core.Application.Abstracation.DbContext;
-using MediatR;
+﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore.Storage;
-using Mc2.CrudTest.Core.Application.Abstracation.Mapping;
+using Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
+using Mc2.CrudTest.Core.Domain.Models;
+
 
 namespace Mc2.CrudTest.Core.Application.Customer.Command.CreateCustomer
 {
-    public class AddOrUpdateCustomerCommand : IRequest<CustomerViewModel>
-    {
-        public CustomerViewModel Customer { get; init; } = default!;
-        public class AddOrUpdateCustomerCommandHandler : IRequestHandler<AddOrUpdateCustomerCommand, CustomerViewModel>
+    public class CreateCustomerCommand : IRequest<Response>
+    { public CustomerViewModel Customer { get; init; } = default!;
+        public class CreateCustomerCommandHandler : IRequestHandler<CreateCustomerCommand, Response>
         {
-            private readonly IApplicationWriteDbContext context;
-          //  private readonly IViewModelToDbEntityMapper<CustomerViewModel, CustomerEntity> customerMapper;
-          //  simple way using static class for mapping and creating domainModel with ObjectValues ==> forget mapster pattern imp
-             
-
-            public AddOrUpdateCustomerCommandHandler(IApplicationWriteDbContext context, IViewModelToDbEntityMapper<CustomerViewModel, CustomerEntity> customerMapper)
+            public CreateCustomerCommandHandler(IReadRepository<Domain.Entities.Customer> CustomerRepository)
             {
-                this.context = context;
-               // this.customerMapper = customerMapper;   
+                customerRepository = CustomerRepository;
             }
-
-            public async Task<CustomerViewModel> Handle(AddOrUpdateCustomerCommand request, CancellationToken cancellationToken)
+            private readonly IReadRepository<Domain.Entities.Customer> customerRepository;
+            private readonly ICustomerService _iCustomerService;
+            public async Task<Response> Handle(CreateCustomerCommand request,
+                CancellationToken cancellationToken)
             {
-                //to impliment Event storing i could using rabbitMQ to store events there or i simply create event table and make record for any event there // i am sorry i didnt have time to imp thats
-                // PRESENTATION/APPLICATION LAYER
+                var User = _iCustomerService.GetCustomerId();
                 var customerViewModel = request.Customer;
-
-                // PERSISTENCE LAYER
                 var customerAdded = false;
                 using (var transaction = await context.Database.BeginTransactionAsync(cancellationToken))
                 {
-                    var sqlTransaction = transaction.GetDbTransaction();
-                    var customerEntity = await context.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.FirstName == request.Customer.FirstName && c.LastName== request.Customer.LastName && c.DateOfBirth == request.Customer.DateOfBirth, cancellationToken: cancellationToken);
+                    var sqlTransaction = transaction.GetDbTransaction(); // For Handling Scenario for there was sql transAction already exsist for this entity
+                                                                        // Like waiting wor commit ang update them or insert after than or geting last result in Case of every bussines Requirment
+                    var customerEntity = await context.Customers.AsNoTracking().FirstOrDefaultAsync(
+                        c => c.FirstName == request.Customer.FirstName && c.LastName == request.Customer.LastName &&
+                             c.DateOfBirth == request.Customer.DateOfBirth, cancellationToken: cancellationToken);
                     if (customerEntity != null)
                     {
                         // Update.
-                        customerEntity= ViewModelToDbEntityMapper.customerMap(customerViewModel);
-                         context.Customers.Update(customerEntity);
-                        context.Entry(customerEntity).State = customerAdded ? EntityState.Modified : EntityState.Modified;
+
+                        context.Customers.Update(customerEntity);
+                        context.Entry(customerEntity).State =
+                            customerAdded ? EntityState.Modified : EntityState.Modified;
                     }
                     else
                     {
                         // Add.
-                        customerEntity = ViewModelToDbEntityMapper.customerMap(customerViewModel);
+
                         customerAdded = true;
                         await context.Customers.AddAsync(customerEntity, cancellationToken);
                         context.Entry(customerEntity).State = customerAdded ? EntityState.Added : EntityState.Modified;
@@ -59,6 +50,7 @@ namespace Mc2.CrudTest.Core.Application.Customer.Command.CreateCustomer
                     await context.SaveChangesAsync(cancellationToken);
                     await transaction.CommitAsync(cancellationToken);
                 }
+
                 return customerViewModel;
             }
         }
