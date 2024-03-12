@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
+using Mc2.CrudTest.Core.Application.Mapper;
 
 namespace Mc2.CrudTest.Core.Application
 {
@@ -15,11 +17,16 @@ namespace Mc2.CrudTest.Core.Application
     {
         public static IServiceCollection AddApplicationLayer(this IServiceCollection services, bool addValidation = false, bool addRequestLogging = false, bool useReadThroughCachingForQueries = false)
         {
+            var mapperConfig = new MapperConfiguration(cfg =>
+            {
+                cfg.AddProfile<CustomerMap>();
+            });
+
+            IMapper mapper = mapperConfig.CreateMapper();
+            services.AddSingleton(mapper);
             services.Scan(scan =>
                 scan
                 .FromCallingAssembly()
-
-                
             );
 
             if (addValidation)

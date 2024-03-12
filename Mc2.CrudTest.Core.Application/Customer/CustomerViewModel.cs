@@ -7,10 +7,8 @@ using System.Threading.Tasks;
 
 namespace Mc2.CrudTest.Core.Application.Customer
 {
-    public class CustomerViewModel : IViewModel
-    {
-        public int Id { get; set; }
-        public string FirstName { get; set; }
+    public class CustomerViewModel : ViewModel
+    {   public string FirstName { get; set; }
         public string LastName { get; set; }
         public string DateOfBirth { get; set; }
         public string PhoneNumber { get; set; }

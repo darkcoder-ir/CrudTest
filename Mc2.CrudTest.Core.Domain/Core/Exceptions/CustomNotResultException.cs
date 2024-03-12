@@ -10,7 +10,7 @@ namespace Mc2.CrudTest.Core.Domain.Core.Exceptions
     [Serializable]
     public sealed class CustomNotResultException : Exception
     {
-        public NotResultTypeEnum Type { get; set; }
+        public NotResultTypeEnum Type { get;  }
 
         public CustomNotResultException(NotResultTypeEnum type)
         {
@@ -18,9 +18,22 @@ namespace Mc2.CrudTest.Core.Domain.Core.Exceptions
         }
         protected CustomNotResultException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
-
+            if (info != null)
+            {
+                Type = (NotResultTypeEnum)info.GetValue("Type", typeof(NotResultTypeEnum));
+            }
         }
+        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            base.GetObjectData(info, context);
 
+            // Add the custom property to the SerializationInfo object
+            info.AddValue("Type", Type, typeof(NotResultTypeEnum));
+        }
+        public static void Throw(NotResultTypeEnum type)
+        {
+            throw new CustomNotResultException(type);
+        }
 
     }
     public enum NotResultTypeEnum
@@ -29,7 +42,8 @@ namespace Mc2.CrudTest.Core.Domain.Core.Exceptions
         NotExsistByFirstLastBirth,
         NotAnyCustomer,
         NotCustomerByEmail,
-        NotExsist
+        NotExsist,
+        InternalFail
 
     }
 }

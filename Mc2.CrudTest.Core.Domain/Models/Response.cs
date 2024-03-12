@@ -14,9 +14,9 @@ public class Response
         IsSuccess = isSuccess;
     }
 
-    public static Response Create(int statusCode, string message, bool isSuccess)
+    public static  Task<Response> Create(int statusCode, string message, bool isSuccess)
     {
-        return new Response(statusCode, message, isSuccess);
+        return  Task.FromResult(new Response(statusCode, message, isSuccess));
     }
 }
 
@@ -28,9 +28,9 @@ public sealed class Response<TResponse> : Response
         ResponseObject = response;
     }
 
-    public static Response<TResponse> Create(TResponse response, int statusCode, string message, bool isSuccess)
+    public static Task< Response<TResponse>> Create(TResponse response, int statusCode, string message, bool isSuccess)
     {
-        return new Response<TResponse>(response, statusCode, message, isSuccess);
+        return Task.FromResult(new Response<TResponse>(response, statusCode, message, isSuccess)) ;
     }
 
     private TResponse? ResponseObject { get; }

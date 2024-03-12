@@ -5,6 +5,7 @@ using Mc2.CrudTest.Core.Domain;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Mc2.CrudTest.Presentation
 {
@@ -13,11 +14,12 @@ namespace Mc2.CrudTest.Presentation
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
+           builder.Services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             // Add services to the container.
             builder.Services.AddMediatR(new MediatRServiceConfiguration() {
             //MediatR Config
             });
+            builder.Services.AddAutoMapper(typeof(Program));
             builder.Services.AddDomainLayer();
             builder.Services.AddApplicationLayer();
             builder.Services.AddDbContext<ApplicationWriteDbContext>(options =>

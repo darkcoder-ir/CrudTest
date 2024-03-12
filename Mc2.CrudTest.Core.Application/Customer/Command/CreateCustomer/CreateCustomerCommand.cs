@@ -1,58 +1,75 @@
-﻿using MediatR;
+﻿using System.Transactions;
+using AutoMapper;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
+using Mc2.CrudTest.Core.Domain.Core.Exceptions;
 using Mc2.CrudTest.Core.Domain.Models;
 
 
 namespace Mc2.CrudTest.Core.Application.Customer.Command.CreateCustomer
 {
     public class CreateCustomerCommand : IRequest<Response>
-    { public CustomerViewModel Customer { get; init; } = default!;
+    {
+        public CustomerViewModel Customer { get; init; } = default!;
+
         public class CreateCustomerCommandHandler : IRequestHandler<CreateCustomerCommand, Response>
         {
-            public CreateCustomerCommandHandler(IReadRepository<Domain.Entities.Customer> CustomerRepository)
+            public CreateCustomerCommandHandler(IRepository<Domain.Entities.Customer> IRepository, IMapper mapper)
             {
-                customerRepository = CustomerRepository;
+                _repository = IRepository;
+                _mapper = mapper;
             }
-            private readonly IReadRepository<Domain.Entities.Customer> customerRepository;
+
+            private readonly IRepository<Domain.Entities.Customer> _repository;
+            private readonly IMapper _mapper;
             private readonly ICustomerService _iCustomerService;
+            private Response _response;
+
             public async Task<Response> Handle(CreateCustomerCommand request,
                 CancellationToken cancellationToken)
             {
-                var User = _iCustomerService.GetCustomerId();
-                var customerViewModel = request.Customer;
-                var customerAdded = false;
-                using (var transaction = await context.Database.BeginTransactionAsync(cancellationToken))
+                var commandType = await _iCustomerService.GetCommandType();
+                var CurrentCustomer = await _repository.GetByIdAsync(request.Customer.ViewModelId);
+                using (var ts = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
-                    var sqlTransaction = transaction.GetDbTransaction(); // For Handling Scenario for there was sql transAction already exsist for this entity
-                                                                        // Like waiting wor commit ang update them or insert after than or geting last result in Case of every bussines Requirment
-                    var customerEntity = await context.Customers.AsNoTracking().FirstOrDefaultAsync(
-                        c => c.FirstName == request.Customer.FirstName && c.LastName == request.Customer.LastName &&
-                             c.DateOfBirth == request.Customer.DateOfBirth, cancellationToken: cancellationToken);
-                    if (customerEntity != null)
+                    try
                     {
-                        // Update.
+                        var customerEntityMapped = _mapper.Map<Domain.Entities.Customer>(request.Customer.ViewModelId);
+                        if (commandType == CommandTypeEnum.update.ToString() ||
+                            CurrentCustomer != null) // one of this check is enoph 
+                        {
+                            // Update.
+                            // this was good for know Add or Update ...
+                            //that header was nor nessecary just i must attention Customer Guid when i want to create that.
 
-                        context.Customers.Update(customerEntity);
-                        context.Entry(customerEntity).State =
-                            customerAdded ? EntityState.Modified : EntityState.Modified;
+                            await _repository.UpdateAsync(customerEntityMapped);
+                            _response = await Response.Create(202, "Customer Updated", true);
+                        }
+                        else
+                        {
+                            await _repository.AddAsync(customerEntityMapped);
+                            _response = await Response.Create(201, "Customer Created", true);
+                        }
+
+                        await _repository.SaveChangesAsync();
+                        ts.Complete();
                     }
-                    else
+                    catch (Exception e)
                     {
-                        // Add.
-
-                        customerAdded = true;
-                        await context.Customers.AddAsync(customerEntity, cancellationToken);
-                        context.Entry(customerEntity).State = customerAdded ? EntityState.Added : EntityState.Modified;
+                        CustomNotResultException.Throw(NotResultTypeEnum.InternalFail);
                     }
-
-
-                    await context.SaveChangesAsync(cancellationToken);
-                    await transaction.CommitAsync(cancellationToken);
                 }
 
-                return customerViewModel;
+                return _response;
             }
         }
     }
+
+    public enum CommandTypeEnum
+    {
+        update =1 ,
+        insert =2
+    }
+  
 }

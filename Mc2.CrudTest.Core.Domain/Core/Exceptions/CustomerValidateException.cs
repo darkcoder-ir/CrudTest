@@ -15,6 +15,7 @@ public sealed class CustomerValidateException : Exception
 
     protected CustomerValidateException(SerializationInfo info, StreamingContext context) : base(info, context)
     {
+        DataError = (List<ValidationError>)info.GetValue("DataError", typeof(List<ValidationError>));
     }
 
     public static CustomerValidateException @Throw(List<ValidationError> errors)
@@ -25,5 +26,12 @@ public sealed class CustomerValidateException : Exception
     public List<ValidationError> GetErrors()
     {
         return DataError;
+    }
+    public override void GetObjectData(SerializationInfo info, StreamingContext context)
+    {
+        base.GetObjectData(info, context);
+
+        // Serialize the DataError list by adding it to the SerializationInfo object
+        info.AddValue("DataError", DataError, typeof(List<ValidationError>));
     }
 }
