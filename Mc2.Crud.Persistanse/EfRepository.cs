@@ -9,6 +9,8 @@ public class EfRepository<T> : RepositoryBase<T>, IReadRepository<T>, IRepositor
 {
     public EfRepository(DbContext dbContext) : base(dbContext)
     {
+
+
     }
 
 }
