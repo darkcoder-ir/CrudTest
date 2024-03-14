@@ -8,10 +8,11 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
 
 namespace Mc2.Crud.Persistanse.DbContexts
 {
-    public class ApplicationReadDbFacade : IApplicationReadDbFacade, IDisposable
+    public class ApplicationReadDbFacade<T> : IReadRepository<T>, IDisposable
     {
         private readonly IDbConnection connection;
 
