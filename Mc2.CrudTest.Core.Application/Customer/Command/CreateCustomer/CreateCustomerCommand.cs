@@ -4,6 +4,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
 using Mc2.CrudTest.Core.Domain.Core.Exceptions;
+using Mc2.CrudTest.Core.Domain.Entities.Events;
 using Mc2.CrudTest.Core.Domain.Models;
 
 
@@ -39,6 +40,7 @@ namespace Mc2.CrudTest.Core.Application.Customer.Command.CreateCustomer
                         if (commandType == CommandTypeEnum.update.ToString() ||
                             CurrentCustomer != null) // one of this check is enoph 
                         {
+                            customerEntityMapped.AddDomainEvent(new CustomerUpdatedEvent(customerEntityMapped.c));
                             // Update.
                             // this was good for know Add or Update ...
                             //that header was nor nessecary just i must attention Customer Guid when i want to create that.

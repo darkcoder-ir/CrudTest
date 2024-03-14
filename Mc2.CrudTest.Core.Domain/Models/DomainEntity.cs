@@ -36,7 +36,6 @@ namespace Mc2.CrudTest.Core.Domain.Models
         }
 
         public override bool Equals(object? obj) => obj is DomainEntity entity && entity != null ? Equals(entity) : base.Equals(obj);
-        public override int GetHashCode() => Id;
         public void RemoveDomainEvent(IDomainEvent eventItem) => domainEvents?.Remove(eventItem);
         internal static void WireUpDispatcher(IDomainEventDispatcher dispatcher) => DomainEntity.dispatcher = dispatcher;
 
