@@ -10,7 +10,7 @@ namespace Mc2.CrudTest.Core.Domain.Core.Exceptions
     [Serializable]
     public sealed class CustomNotResultException : Exception
     {
-        public NotResultTypeEnum Type { get;  }
+        public NotResultTypeEnum Type { get; set; }
 
         public CustomNotResultException(NotResultTypeEnum type)
         {
@@ -29,10 +29,6 @@ namespace Mc2.CrudTest.Core.Domain.Core.Exceptions
 
             // Add the custom property to the SerializationInfo object
             info.AddValue("Type", Type, typeof(NotResultTypeEnum));
-        }
-        public static void Throw(NotResultTypeEnum type)
-        {
-            throw new CustomNotResultException(type);
         }
 
     }

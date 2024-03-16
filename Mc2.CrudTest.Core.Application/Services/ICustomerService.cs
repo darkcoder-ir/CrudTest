@@ -1,7 +1,11 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Ardalis.Specification;
+using Mc2.CrudTest.Core.Application.Spicipications;
+using Mc2.CrudTest.Core.Domain.ValueObjects;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Primitives;
 
-namespace Mc2.CrudTest.Core.Application.Customer.Command.CreateCustomer
+namespace Mc2.CrudTest.Core.Application.Services
 {
     public interface ICustomerService
     {
@@ -13,6 +17,12 @@ namespace Mc2.CrudTest.Core.Application.Customer.Command.CreateCustomer
         public CustomerService(IHttpContextAccessor httpContextAccessor)
         {
             _httpContextAccessor = httpContextAccessor;
+        }
+        public async Task<bool> IsEmailUniqueAsync(Email email)
+        {
+            //To do
+            // later  CustomerService.Whwr(new CustomerSpecification(email));
+            return true;
         }
         public async Task<string?> GetCommandType() //I would not using Jwt token because that not this tasks consince
         {                                       //simply geting CustomerUd from Headers, i know for secuire it should comes from token claims...
@@ -33,5 +43,6 @@ namespace Mc2.CrudTest.Core.Application.Customer.Command.CreateCustomer
 
             return null;
         }
+
     }
 }

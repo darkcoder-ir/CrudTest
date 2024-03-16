@@ -1,8 +1,14 @@
-using Mc2.Crud.Persistanse.DbContexts;
+
+using System.Reflection;
+using Mc2.Crud.Persistanse.DbContext;
 using Mc2.CrudTest.Core.Application;
 using Mc2.CrudTest.Core.Application.Abstracation.DbContext;
+using Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
 using Mc2.CrudTest.Core.Domain;
+using Mc2.CrudTest.Persistanse;
+using Mc2.CrudTest.Presentation.Server.midlewares;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -16,42 +22,23 @@ namespace Mc2.CrudTest.Presentation
             var builder = WebApplication.CreateBuilder(args);
            builder.Services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             // Add services to the container.
-            builder.Services.AddMediatR(new MediatRServiceConfiguration() {
-            //MediatR Config
-            });
-            builder.Services.AddAutoMapper(typeof(Program));
+            builder.Services.AddDbContext<MyAppContext>(options =>
+                options
+                    .UseSqlServer("Server =.; DataBase = Local; UID = app; PWD = app; Trusted_Connection = True; TrustServerCertificate = True") //ConnectionString
+                    .EnableSensitiveDataLogging(true)
+            );
+
+            builder.Services.AddScoped<IDbContext, MyAppContext>();
+            builder.Services.AddScoped<IWriteCustomerRepository>(provider => provider.GetService<WriteCustomerRepository>() ?? throw new Exception("Could not get DB context."));
+            //builder.Services.AddAutoMapper(typeof(Program));
             builder.Services.AddDomainLayer();
             builder.Services.AddApplicationLayer();
-            builder.Services.AddDbContext<ApplicationWriteDbContext>(options =>
-                    options
-                    .UseSqlServer("DataBase=. ......................") //ConnectionString
-                    .EnableSensitiveDataLogging(true)
-                );
-            builder. Services.AddScoped<IApplicationWriteDbContext>(provider => provider.GetService<ApplicationWriteDbContext>() ?? throw new Exception("Could not get DB context."));
-            builder. Services.AddScoped<IApplicationReadDbFacade, ApplicationReadDbFacade>();
+            builder.Services.AddPersistenceLayer();
+  
             builder.Services.AddControllersWithViews();
-            builder.Services.AddRazorPages();
 
             var app = builder.Build();
-            using (var scope = app.Services.CreateScope())
-            {
-                var serviceProvider = scope.ServiceProvider;
-
-                // Perform additional initialization of the domain layer.
-                serviceProvider.WireUpDomainEventHandlers();
-
-                try
-                {
-
-                    var applicationDbContext = serviceProvider.GetRequiredService<ApplicationWriteDbContext>();
-                    applicationDbContext.Database.Migrate();
-                }
-                catch (Exception ex)
-                {
-                    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-                    logger.LogError(ex, "An error occurred while migrating or initializing the database.");
-                }
-            }
+            app.UseExceptionHandleMiddleware();
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
@@ -75,8 +62,12 @@ namespace Mc2.CrudTest.Presentation
             app.MapRazorPages();
             app.MapControllers();
             app.MapFallbackToFile("index.html");
-
+      
             app.Run();
         }
-    }
+
+
+
+
+}
 }

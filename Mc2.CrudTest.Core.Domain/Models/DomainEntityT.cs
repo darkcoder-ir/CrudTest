@@ -40,5 +40,10 @@ namespace Mc2.CrudTest.Core.Domain.Models
         protected DomainEntity(Guid Id) : base(Id)
         {
         }
+
+        protected DomainEntity() : base(Guid.NewGuid())
+        {
+        
+        }
     }
 }

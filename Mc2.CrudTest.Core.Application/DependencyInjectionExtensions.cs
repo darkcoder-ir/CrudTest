@@ -1,54 +1,61 @@
 ﻿using FastExpressionCompiler;
 using Mapster;
-using Mc2.CrudTest.Core.Application.Abstracation.Mapping;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
+using FluentValidation;
+using Mc2.CrudTest.Core.Application.Abstracation.Behavior;
+using Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
+using Mc2.CrudTest.Core.Application.Customer.Command.CreateCustomer;
+using Mc2.CrudTest.Core.Application.Customer.Event;
 using Mc2.CrudTest.Core.Application.Mapper;
 
 namespace Mc2.CrudTest.Core.Application
 {
     public static class DependencyInjectionExtensions
     {
-        public static IServiceCollection AddApplicationLayer(this IServiceCollection services, bool addValidation = false, bool addRequestLogging = false, bool useReadThroughCachingForQueries = false)
+        /// <summary>
+        /// Maybe you see anothers services that was not nessecary , inow , i am trying to create a bew pattern except inbound and ourbount ,
+        /// I wabt to Use reflection to create every instance from any layyer i want....
+        /// at the end i willl remove them ;
+        /// </summary>
+        /// <param name="services"></param>
+        /// <returns></returns>
+        public static IServiceCollection AddApplicationLayer(this IServiceCollection services)
         {
             var mapperConfig = new MapperConfiguration(cfg =>
             {
                 cfg.AddProfile<CustomerMap>();
             });
-
-            IMapper mapper = mapperConfig.CreateMapper();
-            services.AddSingleton(mapper);
-            services.Scan(scan =>
-                scan
-                .FromCallingAssembly()
-            );
-
-            if (addValidation)
+            //ServiceProvider? serviceProvider = services.BuildServiceProvider();
+            //var scopeFactory = serviceProvider.GetRequiredService<IServiceScopeFactory>();
+            //IMapper mapper = mapperConfig.CreateMapper();
+            //services.AddSingleton(mapper);
+            services.AddScoped<IValidator<CreateCustomerCommand>, CreateUpdateCustomerValidator>();
+            services.AddMediatR(config =>
             {
-              //  services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestValidationBehavior<,>));
-              //  best peractice is create pipeline for any request and validate and event storing there
-            }
-
-            if (addRequestLogging)
-            {
-               // services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestPerformanceBehavior<,>));
-            }
-
-            if (useReadThroughCachingForQueries)
-            {
-                //services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestCachingBehavior<,>));
-            }
-
-           
+                config.AddOpenBehavior(typeof(ValidationBehavior<,>));
+                config.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
+               config.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+                config.RegisterServicesFromAssemblies(typeof(CustomerCreatedEventHandler).Assembly);
+          
+            });
+            services.AddScoped<ICustomerService, CustomerService>();
 
             // Mapster
             TypeAdapterConfig.GlobalSettings.Compiler = exp => exp.CompileFast();
+            //using (var scope = scopeFactory.CreateScope())
+            //{
+            //    // Resolve services within the scope
+            //    IDbContext? myScopedService = scope.ServiceProvider.GetRequiredService<IDbContext>();
+            //    // Now you can use myScopedService...
+            //}
 
             return services;
         }

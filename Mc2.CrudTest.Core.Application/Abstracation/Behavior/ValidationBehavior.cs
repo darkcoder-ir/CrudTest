@@ -1,6 +1,8 @@
 ﻿using FluentValidation;
+
 using Mc2.CrudTest.Core.Domain.Core.Exceptions;
 using Mc2.CrudTest.Core.Domain.Core.Validations;
+
 using MediatR;
 
 namespace Mc2.CrudTest.Core.Application.Abstracation.Behavior;
@@ -29,7 +31,7 @@ public sealed class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<
         if (errors.Any())
         {
             //or return GenericResponse<ValidationError>
-            CustomerValidateException.Throw(errors);
+            throw new CustomerValidateException(errors);
         }
 
         var Response = await next();

@@ -12,41 +12,41 @@ using Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
 
 namespace Mc2.Crud.Persistanse.DbContexts
 {
-    public class ApplicationReadDbFacade<T> : IReadRepository<T>, IDisposable
-    {
-        private readonly IDbConnection connection;
+    //public class ApplicationReadDbFacade<T> : IReadRepository<T>, IDisposable
+    //{
+    //    private readonly IDbConnection connection;
 
-        private bool disposedValue = false;
+    //    private bool disposedValue = false;
 
-        public ApplicationReadDbFacade(IConfiguration configuration) => connection = new SqlConnection(configuration.GetConnectionString("ApplicationReadDatabase"));
+    //    public ApplicationReadDbFacade(IConfiguration configuration) => connection = new SqlConnection(configuration.GetConnectionString("ApplicationReadDatabase"));
 
-        public void Dispose()
-        {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
+    //    public void Dispose()
+    //    {
+    //        Dispose(disposing: true);
+    //        GC.SuppressFinalize(this);
+    //    }
 
-        public async Task<IReadOnlyList<T>> QueryAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null, CancellationToken cancellationToken = default)
-                            => (await connection.QueryAsync<T>(sql, param, transaction)).AsList();
+    //    public async Task<IReadOnlyList<T>> QueryAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null, CancellationToken cancellationToken = default)
+    //                        => (await connection.QueryAsync<T>(sql, param, transaction)).AsList();
 
-        public async Task<T> QueryFirstOrDefaultAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null, CancellationToken cancellationToken = default)
-            => await connection.QueryFirstOrDefaultAsync<T>(sql, param, transaction);
+    //    public async Task<T> QueryFirstOrDefaultAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null, CancellationToken cancellationToken = default)
+    //        => await connection.QueryFirstOrDefaultAsync<T>(sql, param, transaction);
 
-        public async Task<T> QuerySingleAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null, CancellationToken cancellationToken = default)
-            => await connection.QuerySingleAsync<T>(sql, param, transaction);
+    //    public async Task<T> QuerySingleAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null, CancellationToken cancellationToken = default)
+    //        => await connection.QuerySingleAsync<T>(sql, param, transaction);
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)   // best practise diposing managed and unmanaged objects
-            {
-                if (disposing)
-                {
+    //    protected virtual void Dispose(bool disposing)
+    //    {
+    //        if (!disposedValue)   // best practise diposing managed and unmanaged objects
+    //        {
+    //            if (disposing)
+    //            {
                   
-                    connection.Dispose();
-                }
+    //                connection.Dispose();
+    //            }
 
-                disposedValue = true;
-            }
-        }
-    }
+    //            disposedValue = true;
+    //        }
+    //    }
+    //}
 }
