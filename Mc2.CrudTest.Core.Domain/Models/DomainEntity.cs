@@ -17,7 +17,8 @@ namespace Mc2.CrudTest.Core.Domain.Models
         {
             this.Id = Id;
         }
-        private static IDomainEventDispatcher dispatcher = new NullDomainEventDispatcher();
+
+        private static IDomainEventDispatcher _dispatcher= new NullDomainEventDispatcher();
         private readonly List<IDomainEvent> domainEvents = new List<IDomainEvent>();
         public IReadOnlyCollection<IDomainEvent> DomainEvents => domainEvents.AsReadOnly();
         public void AddDomainEvent(IDomainEvent eventItem) => domainEvents.Add(eventItem);
@@ -26,7 +27,7 @@ namespace Mc2.CrudTest.Core.Domain.Models
         {
             foreach (var domainEvent in domainEvents)
             {
-                await dispatcher.PublishAsync(domainEvent);
+                await _dispatcher.PublishAsync(domainEvent);
             }
             ClearDomainEvents();
         }
@@ -36,9 +37,8 @@ namespace Mc2.CrudTest.Core.Domain.Models
         }
 
         public override bool Equals(object? obj) => obj is DomainEntity entity && entity != null ? Equals(entity) : base.Equals(obj);
-        public override int GetHashCode() => Id;
         public void RemoveDomainEvent(IDomainEvent eventItem) => domainEvents?.Remove(eventItem);
-        internal static void WireUpDispatcher(IDomainEventDispatcher dispatcher) => DomainEntity.dispatcher = dispatcher;
+        public static void WireUpDispatcher(IDomainEventDispatcher dispatcher) =>DomainEntity._dispatcher = dispatcher;
 
         /// <inheritdoc />
         

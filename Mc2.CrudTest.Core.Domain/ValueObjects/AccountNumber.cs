@@ -12,7 +12,7 @@ namespace Mc2.CrudTest.Core.Domain.ValueObjects
     {
         private AccountNumber(string value) => Value = value;
         public string Value { get; }
-
+        public static implicit operator string(AccountNumber accountNumber) => accountNumber.Value;
         public static AccountNumber Create(string accountNumber)
         {
             CheckValueObject(accountNumber);
@@ -26,7 +26,7 @@ namespace Mc2.CrudTest.Core.Domain.ValueObjects
 
         public override IEnumerable<object> GetAtomicValues()
         {
-            throw new NotImplementedException();
+            yield return Value;
         }
     }
 }

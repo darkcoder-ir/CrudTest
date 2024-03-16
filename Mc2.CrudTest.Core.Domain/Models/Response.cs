@@ -5,33 +5,40 @@ public class Response
     private int StatusCode { get; }
     private string Message { get; }
     private bool IsSuccess { get; }
-
-
-    protected Response(int statusCode, string message, bool isSuccess)
+    private Response(int statusCode, string message, bool isSuccess)
     {
         StatusCode = statusCode;
         Message = message;
         IsSuccess = isSuccess;
     }
-
-    public static  Task<Response> Create(int statusCode, string message, bool isSuccess)
+    public static Response Create(int statusCode, string message, bool isSuccess)
     {
-        return  Task.FromResult(new Response(statusCode, message, isSuccess));
+        return new Response(statusCode, message, isSuccess);
     }
 }
 
-public sealed class Response<TResponse> : Response
+public class Response<T>
 {
-    private Response(TResponse response, int statusCode, string message, bool isSuccess) : base(statusCode, message,
-        isSuccess)
+    private int StatusCode { get; }
+    private string Message { get; }
+    private bool IsSuccess { get; }
+
+    public T? Data { get; set; }
+
+    private Response(T data, int statusCode, string message, bool isSuccess)
     {
-        ResponseObject = response;
+        Data = data;
+        StatusCode = statusCode;
+        Message = message;
+        IsSuccess = isSuccess;
     }
 
-    public static Task< Response<TResponse>> Create(TResponse response, int statusCode, string message, bool isSuccess)
+    public static Response<T> Create(T data, int statusCode, string message, bool isSuccess)
     {
-        return Task.FromResult(new Response<TResponse>(response, statusCode, message, isSuccess)) ;
+        return new Response<T>(data, statusCode, message, isSuccess);
     }
-
-    private TResponse? ResponseObject { get; }
 }
+
+
+
+

@@ -4,11 +4,15 @@ using Mc2.CrudTest.Core.Domain.Core.Validations;
 namespace Mc2.CrudTest.Core.Domain.Core.Exceptions;
 
 [Serializable]
-public sealed class CustomerValidateException : Exception
+public sealed class CustomerValidateException : Exception   /// i now they must be abstract exeption class or generic class
+                                                            /// and customer exceptions must be in use cases layer not here
+                                                            /// and the exceptions in domain layer must throw standard exceptions
+                                                            /// and check that in use cases (Appplication) layer and there trowing Generic Exceptions to exceptionHandlers midleware
+                                                            /// but i think would not have time to doing thoese...im sorry
 {
-    private List<ValidationError> DataError{ get; }
+    private List<ValidationError> DataError{ get; set; }
 
-    private CustomerValidateException(List<ValidationError> errors)
+    public CustomerValidateException(List<ValidationError> errors)
     {
         DataError = errors;
     }
@@ -16,11 +20,6 @@ public sealed class CustomerValidateException : Exception
     protected CustomerValidateException(SerializationInfo info, StreamingContext context) : base(info, context)
     {
         DataError = (List<ValidationError>)info.GetValue("DataError", typeof(List<ValidationError>));
-    }
-
-    public static CustomerValidateException @Throw(List<ValidationError> errors)
-    {
-        return new CustomerValidateException(errors);
     }
 
     public List<ValidationError> GetErrors()

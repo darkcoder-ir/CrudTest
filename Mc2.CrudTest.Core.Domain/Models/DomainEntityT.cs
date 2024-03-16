@@ -11,7 +11,9 @@ namespace Mc2.CrudTest.Core.Domain.Models
 {
     public abstract class DomainEntity<TEntity> : DomainEntity where TEntity : IDomainEntity
     {
-        public TEntity CloneWith(Action<TEntity> action)
+        public TEntity CloneWith(Action<TEntity> action)   // for the scenarios that we wants to with void deligate or func or Action
+                                                           // combine one Aggregate to Another And Geting that ready for
+                                                           // setuping Aggregate Root. not usseage in this scenario
         {
             var e = CreateShallowCopy();
             action(e);
@@ -21,8 +23,8 @@ namespace Mc2.CrudTest.Core.Domain.Models
 
         public virtual void ValidateAggregate()
         {
-        }//reflection clon if need 
-
+        }
+        //reflection clon if need 
         protected TEntity CreateShallowCopy() => (TEntity)MemberwiseClone();
 
         protected void ValidateNotNull(params DomainEntity[] domainEntities)
@@ -37,6 +39,11 @@ namespace Mc2.CrudTest.Core.Domain.Models
         /// <inheritdoc />
         protected DomainEntity(Guid Id) : base(Id)
         {
+        }
+
+        protected DomainEntity() : base(Guid.NewGuid())
+        {
+        
         }
     }
 }

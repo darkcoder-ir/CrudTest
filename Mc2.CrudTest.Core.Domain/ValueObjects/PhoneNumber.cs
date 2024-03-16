@@ -9,7 +9,7 @@ namespace Mc2.CrudTest.Core.Domain.ValueObjects
 {
     public sealed class PhoneNumber : ValueObject
     {
-        public const int MaxLength = 11;
+        public const int MaxLength = 14;
         private PhoneNumber(ulong value) => Value = value;
         public ulong Value { get; }
 
@@ -27,7 +27,7 @@ namespace Mc2.CrudTest.Core.Domain.ValueObjects
             //or maybe i create some customer that is in event  store first, and after savechanges they will be clears and after that there isnt state of created customer befor in Aggregate Events...
 
         }
-
+        public static implicit operator ulong(PhoneNumber phoneNumber) => phoneNumber.Value;
         public override IEnumerable<object> GetAtomicValues()
         {
             yield return Value;
