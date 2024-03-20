@@ -1,6 +1,5 @@
 ﻿
 using System.Data;
-using Mc2.Crud.Persistanse.DbContexts;
 using Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
 using Mc2.CrudTest.Core.Domain.Entities;
 using Microsoft.EntityFrameworkCore;

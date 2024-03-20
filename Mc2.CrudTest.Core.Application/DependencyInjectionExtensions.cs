@@ -2,19 +2,15 @@
 using Mapster;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using AutoMapper;
 using FluentValidation;
 using Mc2.CrudTest.Core.Application.Abstracation.Behavior;
-using Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
 using Mc2.CrudTest.Core.Application.Customer.Command.CreateCustomer;
 using Mc2.CrudTest.Core.Application.Customer.Event;
 using Mc2.CrudTest.Core.Application.Mapper;
+using Mc2.CrudTest.Core.Application.Services;
+using Mc2.CrudTest.Core.Domain.Models;
 
 namespace Mc2.CrudTest.Core.Application
 {
@@ -37,6 +33,7 @@ namespace Mc2.CrudTest.Core.Application
             //var scopeFactory = serviceProvider.GetRequiredService<IServiceScopeFactory>();
             //IMapper mapper = mapperConfig.CreateMapper();
             //services.AddSingleton(mapper);
+                services.AddScoped<Response> ();
             services.AddScoped<IValidator<CreateCustomerCommand>, CreateUpdateCustomerValidator>();
             services.AddMediatR(config =>
             {

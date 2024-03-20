@@ -1,16 +1,9 @@
-﻿using Mc2.CrudTest.Core.Application.Abstracation.DbContext;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Mc2.CrudTest.Core.Domain.Entities;
 using Mc2.CrudTest.Core.Domain.ValueObjects;
 
-namespace Mc2.Crud.Persistanse.Config
-{
+namespace Mc2.Crud.Persistanse.Config;
     internal class CustomerEntityConfiguration : IEntityTypeConfiguration<Customer>
     {
         public void Configure(EntityTypeBuilder<Customer> builder)
@@ -84,7 +77,17 @@ namespace Mc2.Crud.Persistanse.Config
             //builder.HasQueryFilter(user => !user.IsDeleted);
 
             //other config to less mvarchar column and ....
+//            builder.Property<string> ("CreatedBy")
         }
         //other config
     }
-}
+//    public abstract class AuditableDbEntity : IDbEntity
+//    {
+//        public string CreatedBy { get; set; } = default!;
+//
+//        public DateTime CreatedUtc { get; set; }
+//
+//        public string? LastModifiedBy { get; set; }
+//
+//        public DateTime? LastModifiedUtc { get; set; }
+//    }

@@ -18,11 +18,11 @@ namespace Mc2.CrudTest.Core.Application.Services
         {
             _httpContextAccessor = httpContextAccessor;
         }
-        public async Task<bool> IsEmailUniqueAsync(Email email)
+        public Task<bool> IsEmailUniqueAsync(Email email)
         {
             //To do
             // later  CustomerService.Whwr(new CustomerSpecification(email));
-            return true;
+            return Task.FromResult (true);
         }
         public async Task<string?> GetCommandType() //I would not using Jwt token because that not this tasks consince
         {                                       //simply geting CustomerUd from Headers, i know for secuire it should comes from token claims...
@@ -30,11 +30,17 @@ namespace Mc2.CrudTest.Core.Application.Services
                 || _httpContextAccessor.HttpContext is null
                 || _httpContextAccessor.HttpContext.Request is null)
                 return null;
-            try
+                StringValues customer = _httpContextAccessor.HttpContext.Request.Headers["RequestType"];
+                try
             {
-                StringValues Customer = _httpContextAccessor.HttpContext.Request.Headers["RequestType"];
-                string? res = Customer.FirstOrDefault();
-                return await Task.FromResult(res);
+                string? res = null;
+                foreach ( var s in customer )
+                {
+                    res = s;
+                    break;
+                }
+                if ( res == null ) { }
+                if ( res != null ) return await Task.FromResult (res).ConfigureAwait (false);
             }
             catch (Exception ex)
             {

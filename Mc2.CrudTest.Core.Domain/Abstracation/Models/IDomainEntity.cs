@@ -6,8 +6,7 @@ using System.Threading.Tasks;
 
 namespace Mc2.CrudTest.Core.Domain.Abstracation.Models
 {
-    public interface IDomainEntity
-    {
-         Guid Id { get; }
-    }
+  public interface IDomainEntity{
+  Guid Id { get; }
+  }
 }

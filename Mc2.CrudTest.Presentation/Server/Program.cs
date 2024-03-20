@@ -1,16 +1,11 @@
 
-using System.Reflection;
 using Mc2.Crud.Persistanse.DbContext;
 using Mc2.CrudTest.Core.Application;
-using Mc2.CrudTest.Core.Application.Abstracation.DbContext;
 using Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
 using Mc2.CrudTest.Core.Domain;
 using Mc2.CrudTest.Persistanse;
 using Mc2.CrudTest.Presentation.Server.midlewares;
-using Microsoft.AspNetCore.ResponseCompression;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Mc2.CrudTest.Presentation
