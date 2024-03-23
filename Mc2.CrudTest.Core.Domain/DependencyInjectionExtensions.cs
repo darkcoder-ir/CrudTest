@@ -14,6 +14,7 @@ namespace Mc2.CrudTest.Core.Domain
     {
         public static IServiceCollection AddDomainLayer(this IServiceCollection services)
         {
+
             services.AddSingleton<IDomainEventDispatcher, DomainEventDispatcher>();
             return services;
         }

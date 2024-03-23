@@ -7,7 +7,7 @@ using MediatR;
 
 namespace Mc2.CrudTest.Core.Application.Abstracation.Behavior;
 
-public sealed class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+public sealed class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse> where TRequest : notnull
 {
     public ValidationBehavior(IEnumerable<IValidator<TRequest>> validators)
     {
@@ -20,8 +20,11 @@ public sealed class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<
         CancellationToken cancellationToken)
     {
         //pre
-        var context = new ValidationContext<TRequest>(request);
-        var validationFails = await Task.WhenAll(_validators.Select(v => v.ValidateAsync(context)));
+            // ReSharper disable once HeapView.ObjectAllocation.Evident
+            var context = new ValidationContext<TRequest>(request);
+            if ( context == null ) throw new ArgumentNullException (nameof (context));
+            var validationFails =
+                            await Task.WhenAll (_validators.Select (v => v.ValidateAsync (context, cancellationToken)));
 
         var errors = validationFails.Where(rtesult => !rtesult.IsValid)
             .SelectMany(rtesult => rtesult.Errors)
@@ -34,10 +37,10 @@ public sealed class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<
             throw new CustomerValidateException(errors);
         }
 
-        var Response = await next();
+        var response = await next();
 
         //post
 
-        return Response;
+        return response;
     }
 }

@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Mc2.CrudTest.Core.Domain.Models
 {
-    public abstract class DomainEntity : IDomainEntity
+    public abstract class DomainEntity : IDomainEntity  
     {
         public Guid Id { get; private init; }
         public DomainEntity(Guid Id)
