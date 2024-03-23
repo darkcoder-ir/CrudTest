@@ -16,14 +16,13 @@ namespace Mc2.CrudTest.Core.Application.Customer.Command.CreateCustomer ;
     {
       public CreateCustomerCommandHandler
               (
-              IWriteCustomerRepository repository, IMapper mapper, ICustomerService iCustomerService,
-              IDbContext dbContext, Response response)
+              IWriteCustomerRepository repository,  ICustomerService iCustomerService,
+              IDbContext dbContext)
         {
           _repository = repository;
-          _mapper = mapper;
           _iCustomerService = iCustomerService;
           _dbContext = dbContext;
-          _response = response;
+     
         }
 
 

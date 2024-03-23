@@ -26,33 +26,33 @@ namespace Mc2.CrudTest.Core.Application.Abstracation.Behavior
                 .WithMessage("Email must be Uniq in Database");
         }
 
-        private async Task<bool> ValidateEmailUniqe(string email, CancellationToken arg2)
+        private  Task<bool> ValidateEmailUniqe(string email, CancellationToken arg2)
         {
-            var res = await _validateService.CheckCustomerExsistByEmail(email);
-            return res;
+            var res =  _validateService.CheckCustomerExsistByEmail(email);
+            return Task.FromResult(res);
         }
 
-        private async Task<bool> ValidateFullname(CustomerViewModel arg1, CancellationToken arg2)
+        private  Task<bool> ValidateFullname(CustomerViewModel arg1, CancellationToken arg2)
         {
-            var exists =await
+            var exists =
                 _validateService.CheckCustomerExsistByFullName(arg1.FirstName, arg1.LastName, arg1.DateOfBirth);
-                return exists;
+                return Task.FromResult(exists);
         }
 
-        private async Task<bool> ValidatePhoneNumber(string? arg1, CancellationToken token)
+        private  Task<bool> ValidatePhoneNumber(string? arg1, CancellationToken token)
         {
                 if ( arg1 == null ) throw new ArgumentNullException (nameof (arg1));
                 PhoneNumberUtil phoneNumberUtil = PhoneNumberUtil.GetInstance();
             try
             
             {
-                var result = await Task.Run(() => phoneNumberUtil.IsPossibleNumber(arg1.ToString(), "IR"));
+                var result =   phoneNumberUtil.IsPossibleNumber(arg1.ToString(), "IR");
 
-                return result;
+                return Task.FromResult(result);
             }
             catch
             {
-                return false;
+                return Task.FromResult(false);
             }
         }
     }

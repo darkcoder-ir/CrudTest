@@ -1,32 +1,36 @@
 ﻿using System.ComponentModel;
 using Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
+using Mc2.CrudTest.Core.Application.Customer;
 using Microsoft.EntityFrameworkCore;
 
 namespace Mc2.CrudTest.Core.Application.Services;
 
 public interface IValidateService
 {
-    public Task< bool> CheckCustomerExsistByFullName(string firstname , string lastname , string datteBitrh);
-    public Task<bool> CheckCustomerExsistByEmail(string email);
+    bool CheckCustomerExsistByFullName(string firstname , string lastname , string datteBitrh);
+   bool CheckCustomerExsistByEmail(string email);
 
 }
 
 public class ValidataService : IValidateService
 {
-    private readonly IDbContext _dbContext;
+    private readonly IReadRepository<Domain.Entities.Customer> repository;
 
-    public ValidataService(IDbContext dbContext)
+    public ValidataService(IReadRepository<Domain.Entities.Customer> readRepository)
     {
-        _dbContext = dbContext;
+        repository = readRepository;
     }
 
 
-    public async Task<bool> CheckCustomerExsistByFullName(string firstname, string lastname, string datteBitrh)
+    public  bool CheckCustomerExsistByFullName(string firstname, string lastname, string datteBitrh )
     {
-        var res = await _dbContext.Customers.Where(w =>
-                w.FirstName == firstname && w.LastName == lastname && w.DateOfBirth == datteBitrh)
-            .FirstOrDefaultAsync();
-        if (res == null)
+        var param = new { FirstName = firstname, LastName = lastname, DateOfBirth = datteBitrh };
+        var customer =  repository.QueryFirstOrDefaultAsync<CustomerViewModel>(@"SELECT
+                      *
+                  FROM [dbo].[Customers] c WITH(NOLOCK)
+				  where c.FirstName=@FirstName and c.LastName=@LastName and c.DateOfBirth = @DateOfBirth ", param );
+      
+        if (customer == null)
         {
             return false;
         }
@@ -34,11 +38,14 @@ public class ValidataService : IValidateService
         
     }
 
-    public async Task<bool> CheckCustomerExsistByEmail(string email)
+    public bool CheckCustomerExsistByEmail(string cuemail)
     {
-        var res = await _dbContext.Customers.Where(w => w.Email == email)
-            .FirstOrDefaultAsync();
-        if (res == null) 
+        var param =new {Email =cuemail};
+        var customer =  repository.QueryFirstOrDefaultAsync<CustomerViewModel>(@"SELECT
+                      *
+                  FROM [dbo].[Customers] c WITH(NOLOCK)
+				  where c.Email=@Email ", param);
+        if (customer == null) 
         {
             return false;
         }

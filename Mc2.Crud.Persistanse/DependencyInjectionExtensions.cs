@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Mc2.Crud.Persistanse.DbContext;
 using Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace Mc2.CrudTest.Persistanse
 {
@@ -17,11 +18,16 @@ namespace Mc2.CrudTest.Persistanse
                                                      .UseSqlServer (coonectionString)
                                                      .EnableSensitiveDataLogging (true)
                 );
-        services.AddScoped<IWriteCustomerRepository, WriteCustomerRepository> ();
-                //(provider => provider.GetService<WriteCustomerRepository>() ?? throw new Exception("Could not get DB context."));
-        services.AddScoped<IDbContext, MyAppContext> ();
+        services.AddScoped<IDbContext>(provider =>
+        {
+            // Resolve the DbContext from the service provider
+            var dbContext = provider.GetRequiredService<MyAppContext>();
+            return dbContext;
+        });
+            services.AddScoped<IWriteCustomerRepository, WriteCustomerRepository> ();
+            services.AddScoped(typeof(IReadRepository<>), typeof(ReadRepository<>));
 
-        return services;
+            return services;
       }
   }
 }

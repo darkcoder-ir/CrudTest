@@ -17,16 +17,16 @@ namespace Mc2.CrudTest.Presentation
             var builder = WebApplication.CreateBuilder(args);
            builder.Services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             // Add services to the container.
-            builder.Services.AddDbContext<MyAppContext>(options =>
-                options
-                    .UseSqlServer("Server =.; DataBase = Local; UID = app; PWD = app; Trusted_Connection = True; TrustServerCertificate = True") //ConnectionString
-                    .EnableSensitiveDataLogging(true)
-            );
+            //builder.Services.AddDbContext<MyAppContext>(options =>
+            //    options
+            //        .UseSqlServer("Server =.; DataBase = Local; UID = app; PWD = app; Trusted_Connection = True; TrustServerCertificate = True") //ConnectionString
 
+            //);
+            builder.Services.AddDomainLayer();
             builder.Services.AddScoped<IDbContext, MyAppContext>();
             builder.Services.AddScoped<IWriteCustomerRepository>(provider => provider.GetService<WriteCustomerRepository>() ?? throw new Exception("Could not get DB context."));
             //builder.Services.AddAutoMapper(typeof(Program));
-            builder.Services.AddDomainLayer();
+    
             builder.Services.AddApplicationLayer();
             builder.Services.AddPersistenceLayer();
   
@@ -52,9 +52,6 @@ namespace Mc2.CrudTest.Presentation
             app.UseStaticFiles();
 
             app.UseRouting();
-            
-
-            app.MapRazorPages();
             app.MapControllers();
             app.MapFallbackToFile("index.html");
       

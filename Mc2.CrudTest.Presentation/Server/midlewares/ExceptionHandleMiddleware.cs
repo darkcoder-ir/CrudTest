@@ -42,7 +42,7 @@ namespace Mc2.CrudTest.Presentation.Server.midlewares
             }
             else if (ex is CustomerValidateException)
             {
-                List<ValidationError> dataError = (ex as CustomerValidateException).GetErrors();
+                List<ValidationError> dataError = ((CustomerValidateException)ex).GetErrors();
                 await httpContext.Response.WriteAsJsonAsync(
                     Response<List<ValidationError>>.Create(dataError, 500, "Validate error", false));
             }
