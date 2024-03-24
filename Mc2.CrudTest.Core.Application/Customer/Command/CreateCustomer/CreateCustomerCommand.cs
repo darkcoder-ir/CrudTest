@@ -1,66 +1,94 @@
-﻿using Mc2.CrudTest.Core.Application.Abstracation.DbContext;
+﻿using AutoMapper;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore.Storage;
-using Mc2.CrudTest.Core.Application.Abstracation.Mapping;
+using Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
+using Mc2.CrudTest.Core.Application.Services;
+using Mc2.CrudTest.Core.Domain.Core.Exceptions;
+using Mc2.CrudTest.Core.Domain.Models;
 
-namespace Mc2.CrudTest.Core.Application.Customer.Command.CreateCustomer
-{
-    public class AddOrUpdateCustomerCommand : IRequest<CustomerViewModel>
+
+namespace Mc2.CrudTest.Core.Application.Customer.Command.CreateCustomer ;
+
+  public class CreateCustomerCommand : IRequest<Response>
+  {
+    public CustomerViewModel? Customer { get; set; }
+
+    public class CreateCustomerCommandHandler : IRequestHandler<CreateCustomerCommand, Response>
     {
-        public CustomerViewModel Customer { get; init; } = default!;
-        public class AddOrUpdateCustomerCommandHandler : IRequestHandler<AddOrUpdateCustomerCommand, CustomerViewModel>
+      public CreateCustomerCommandHandler
+              (
+              IWriteCustomerRepository repository,  ICustomerService iCustomerService,
+              IDbContext dbContext)
         {
-            private readonly IApplicationWriteDbContext context;
-          //  private readonly IViewModelToDbEntityMapper<CustomerViewModel, CustomerEntity> customerMapper;
-          //  simple way using static class for mapping and creating domainModel with ObjectValues ==> forget mapster pattern imp
-             
+          _repository = repository;
+          _iCustomerService = iCustomerService;
+          _dbContext = dbContext;
+     
+        }
 
-            public AddOrUpdateCustomerCommandHandler(IApplicationWriteDbContext context, IViewModelToDbEntityMapper<CustomerViewModel, CustomerEntity> customerMapper)
+
+      private readonly IWriteCustomerRepository _repository;
+      private readonly IMapper _mapper;
+      private readonly ICustomerService _iCustomerService;
+      private readonly IDbContext _dbContext;
+      private Response _response ;
+
+      public async Task<Response> Handle
+              (
+              CreateCustomerCommand request,
+              CancellationToken cancellationToken)
+        {
+          Domain.Entities.Customer customerEntityMapped;
+          if ( request == null ) throw new ArgumentNullException ($"request is Null...");
+          {
+            var entityMapped = request.Customer ?? throw new ArgumentNullException (nameof (Customer));
+                                       customerEntityMapped = Domain.Entities.Customer.Create (entityMapped.FirstName,
+                                                                                               entityMapped.LastName,
+                                                                                               entityMapped.Email,
+                                                                                               entityMapped.PhoneNumber,
+                                                                                               entityMapped.BankAccountNumber,
+                                                                                               entityMapped.DateOfBirth
+                                                                      );
+          }
+          // var ebitymaped = _mapper.Map<Domain.Entities.Customer>(request.Customer);
+          var commandType = await _iCustomerService.GetCommandType ();
+          await using ( var trans = await _dbContext.datbase.BeginTransactionAsync (cancellationToken) )
+          {
+            try
             {
-                this.context = context;
-               // this.customerMapper = customerMapper;   
-            }
+              if ( string.Equals (commandType, Enum.GetName (CommandTypeEnum.Update),
+                                  StringComparison.CurrentCultureIgnoreCase) ) // one of this check is enoph 
+              {
+                // this is not nessecary to using clone way... because i was handling event part in domain creating moment just in Unit save changes i will publish event // Actulyy i was impiliment stronger domain with dispachers event (more event with some speacial event) that wasnt need only one event publishing (means to event storing) was inophe
+                // customerEntityMapped.AddDomainEvent(new CustomerUpdatedEvent(customerEntityMapped.CloneWith(""""""""""""""""""));
+                // Update.
+                // this was good for know Add or Update ...
+                //that header was nor nessecary just i must attention Customer Guid when i want to create that.
 
-            public async Task<CustomerViewModel> Handle(AddOrUpdateCustomerCommand request, CancellationToken cancellationToken)
-            {
-                //to impliment Event storing i could using rabbitMQ to store events there or i simply create event table and make record for any event there // i am sorry i didnt have time to imp thats
-                // PRESENTATION/APPLICATION LAYER
-                var customerViewModel = request.Customer;
-
-                // PERSISTENCE LAYER
-                var customerAdded = false;
-                using (var transaction = await context.Database.BeginTransactionAsync(cancellationToken))
-                {
-                    var sqlTransaction = transaction.GetDbTransaction();
-                    var customerEntity = await context.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.FirstName == request.Customer.FirstName && c.LastName== request.Customer.LastName && c.DateOfBirth == request.Customer.DateOfBirth, cancellationToken: cancellationToken);
-                    if (customerEntity != null)
-                    {
-                        // Update.
-                        customerEntity= ViewModelToDbEntityMapper.customerMap(customerViewModel);
-                         context.Customers.Update(customerEntity);
-                        context.Entry(customerEntity).State = customerAdded ? EntityState.Modified : EntityState.Modified;
-                    }
-                    else
-                    {
-                        // Add.
-                        customerEntity = ViewModelToDbEntityMapper.customerMap(customerViewModel);
-                        customerAdded = true;
-                        await context.Customers.AddAsync(customerEntity, cancellationToken);
-                        context.Entry(customerEntity).State = customerAdded ? EntityState.Added : EntityState.Modified;
-                    }
-
-
-                    await context.SaveChangesAsync(cancellationToken);
-                    await transaction.CommitAsync(cancellationToken);
+                var result = await _repository.UpdateAsync (customerEntityMapped);
+                _response = Response.Create (202, "Customer Updated", true) ?? throw new NullReferenceException();
+              }
+              else
+              {
+                var result = await _repository.AddAsync (customerEntityMapped);
+                _response = Response.Create (201, "Customer Created", true) ?? throw new NullReferenceException();
                 }
-                return customerViewModel;
+
+              await trans.CommitAsync (cancellationToken);
             }
+            catch ( Exception e )
+            {
+              await trans.RollbackAsync (cancellationToken);
+              throw new CustomNotResultException (NotResultTypeEnum.InternalFail);
+            }
+          }
+
+          return _response;
         }
     }
-}
+  }
+
+  public enum CommandTypeEnum
+  {
+    Update = 1,
+    Insert = 2
+  }

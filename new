@@ -1,0 +1,3379 @@
+diff --git a/MC2.Crud.Infrastructure/DependencyInjection.cs b/MC2.Crud.Infrastructure/DependencyInjection.cs
+deleted file mode 100644
+index 04da0a0..0000000
+--- a/MC2.Crud.Infrastructure/DependencyInjection.cs
++++ /dev/null
+@@ -1,29 +0,0 @@
+-﻿using System;
+-using System.Collections.Generic;
+-using System.Linq;
+-using System.Text;
+-using System.Threading.Tasks;
+-using Mc2.CrudTest.Core.Domain.Abstracation.Events;
+-using Mc2.CrudTest.Core.Domain.Events;
+-using Mc2.CrudTest.Core.Domain.Models;
+-using Microsoft.Extensions.DependencyInjection;
+-
+-namespace MC2.Crud.Infrastructure
+-{
+-    public static class DependencyInjection
+-    {
+-
+-            public static IServiceCollection AddInfraLayer(this IServiceCollection services)
+-            {
+-            // services.AddSingleton<IRabbitMqventDispatcher, RabbitMQEventDispatcher();
+-                return services;
+-            }
+-            public static IServiceProvider WireUpDomainEventHandlers(this IServiceProvider serviceProvider)
+-            {
+-                DomainEntity.WireUpDispatcher(serviceProvider.GetRequiredService<IRabbitMqventDispatcher>());
+-                return serviceProvider;
+-            }
+-
+-        }
+-    
+-}
+diff --git a/MC2.Crud.Infrastructure/MC2.Crud.Infrastructure.csproj b/MC2.Crud.Infrastructure/MC2.Crud.Infrastructure.csproj
+deleted file mode 100644
+index 7830e40..0000000
+--- a/MC2.Crud.Infrastructure/MC2.Crud.Infrastructure.csproj
++++ /dev/null
+@@ -1,17 +0,0 @@
+-﻿<Project Sdk="Microsoft.NET.Sdk">
+-
+-  <PropertyGroup>
+-    <TargetFramework>net7.0</TargetFramework>
+-    <ImplicitUsings>enable</ImplicitUsings>
+-    <Nullable>enable</Nullable>
+-  </PropertyGroup>
+-
+-  <ItemGroup>
+-    <PackageReference Include="RabbitMQ.Client" Version="6.8.1" />
+-  </ItemGroup>
+-
+-  <ItemGroup>
+-    <ProjectReference Include="..\Mc2.CrudTest.Core.Application\Mc2.CrudTest.Core.Application.csproj" />
+-  </ItemGroup>
+-
+-</Project>
+diff --git a/MC2.Crud.Infrastructure/RabbitMQEventDispatcher.cs b/MC2.Crud.Infrastructure/RabbitMQEventDispatcher.cs
+deleted file mode 100644
+index 6ffac40..0000000
+--- a/MC2.Crud.Infrastructure/RabbitMQEventDispatcher.cs
++++ /dev/null
+@@ -1,21 +0,0 @@
+-﻿using Mc2.CrudTest.Core.Domain.Abstracation.Events;
+-
+-namespace MC2.Crud.Infrastructure;
+-
+-public  class RabbitMQEventDispatcher :  IDomainEventDispatcher,IRabbitMqventDispatcher
+-{
+-    async Task IDomainEventDispatcher.PublishAsync<TEvent>(TEvent domainEvent)
+-    {
+-        throw new NotImplementedException();
+-    }
+-
+-    async Task IRabbitMqventDispatcher.PublishAsync<TEvent>(TEvent domainEvent)
+-    {
+-        throw new NotImplementedException();
+-    }
+-}
+-public interface IRabbitMqventDispatcher  : IDomainEventDispatcher
+-{
+-
+-    Task PublishAsync<TEvent>(TEvent domainEvent) where TEvent : IDomainEvent;
+-}
+\ No newline at end of file
+diff --git a/Mc2.Crud.Persistanse/Config/CustomerEntityConfiguration.cs b/Mc2.Crud.Persistanse/Config/CustomerEntityConfiguration.cs
+index d603c36..04f5df1 100644
+--- a/Mc2.Crud.Persistanse/Config/CustomerEntityConfiguration.cs
++++ b/Mc2.Crud.Persistanse/Config/CustomerEntityConfiguration.cs
+@@ -1,93 +1,20 @@
+-﻿using Microsoft.EntityFrameworkCore;
++﻿using Mc2.CrudTest.Core.Application.Abstracation.DbContext;
++using Microsoft.EntityFrameworkCore;
+ using Microsoft.EntityFrameworkCore.Metadata.Builders;
+-using Mc2.CrudTest.Core.Domain.Entities;
+-using Mc2.CrudTest.Core.Domain.ValueObjects;
+-
+-namespace Mc2.Crud.Persistanse.Config;
+-    internal class CustomerEntityConfiguration : IEntityTypeConfiguration<Customer>
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Text;
++using System.Threading.Tasks;
++
++namespace Mc2.Crud.Persistanse.Config
++{
++    internal class CustomerEntityConfiguration : IEntityTypeConfiguration<CustomerEntity>
+     {
+-        public void Configure(EntityTypeBuilder<Customer> builder)
++        public void Configure(EntityTypeBuilder<CustomerEntity> builder)
+         {
+-            builder.HasKey(c => c.Id);
+-            builder.OwnsOne(customer => customer.FirstName, firstNameBuilder =>
+-            {
+-                firstNameBuilder.WithOwner();
+-
+-                firstNameBuilder.Property(firstName => firstName.Value)
+-                    .HasColumnName(nameof(Customer.FirstName))
+-                    .HasMaxLength(FirstName.MaxLenght)
+-
+-                    .IsRequired();
+-
+-            });
+-            builder.OwnsOne(customer => customer.LastName, lastNameBuilder =>
+-            {
+-                lastNameBuilder.WithOwner();
+-
+-                lastNameBuilder.Property(lastName => lastName.Value)
+-                    .HasColumnName(nameof(Customer.LastName))
+-                    .HasMaxLength(LastName.MaxLenght)
+-                    .IsRequired();
+-            });
+-            builder.OwnsOne(customer => customer.Email, emailBuilder =>
+-            {
+-                emailBuilder.WithOwner();
+-
+-                emailBuilder.Property(email => email.Value)
+-                    .HasColumnName(nameof(Customer.Email))
+-                    .HasMaxLength(Email.MaxLength)
+-                    .IsRequired();
+-            });
+-            builder.OwnsOne(customer => customer.AccountNumber, emailBuilder =>
+-            {
+-                emailBuilder.WithOwner();
+-
+-                emailBuilder.Property(AccountNumber => AccountNumber.Value)
+-                    .HasColumnName(nameof(Customer.AccountNumber))
+-                    .IsRequired();
+-            });
+-            builder.OwnsOne(customer => customer.DateOfBirth, emailBuilder =>
+-            {
+-                emailBuilder.WithOwner();
+-
+-                emailBuilder.Property(DateOfBirth => DateOfBirth.Value)
+-                    .HasColumnName(nameof(Customer.DateOfBirth))
+-                    .HasMaxLength(10)
+-                    .IsRequired();
+-            });
+-            builder.OwnsOne(customer => customer.PhoneNumber, emailBuilder =>
+-            {
+-                emailBuilder.WithOwner();
+-
+-                emailBuilder.Property(PhoneNumber => PhoneNumber.Value)
+-                    .HasColumnName(nameof(Customer.PhoneNumber))
+-                    .HasMaxLength(13)
+-
+-                    .IsRequired();
+-            });
+-            builder.Property<string>("FullName")
+-                .HasComputedColumnSql("CONCAT(FirstName, '-', LastName, '-', DateOfBirth)")
+-                .HasColumnName("FullName")
+-                .ValueGeneratedOnAddOrUpdate()
+-                .HasMaxLength(255)
+-            .IsRequired();
+-            // Create a unique index on the computed column
+-            builder.HasIndex("FullName").IsUnique();
+-            //builder.Property(user => user.IsDeleted).HasDefaultValue(false);
+-            //builder.HasQueryFilter(user => !user.IsDeleted);
+-
+-            //other config to less mvarchar column and ....
+-//            builder.Property<string> ("CreatedBy")
++            builder.Property(e => e.PhoneNumber).HasMaxLength(14);
++            //other config
+         }
+-        //other config
+     }
+-//    public abstract class AuditableDbEntity : IDbEntity
+-//    {
+-//        public string CreatedBy { get; set; } = default!;
+-//
+-//        public DateTime CreatedUtc { get; set; }
+-//
+-//        public string? LastModifiedBy { get; set; }
+-//
+-//        public DateTime? LastModifiedUtc { get; set; }
+-//    }
++}
+diff --git a/Mc2.Crud.Persistanse/DbContext/ApplicationReadDbFacade.cs b/Mc2.Crud.Persistanse/DbContext/ApplicationReadDbFacade.cs
+new file mode 100644
+index 0000000..6273d07
+--- /dev/null
++++ b/Mc2.Crud.Persistanse/DbContext/ApplicationReadDbFacade.cs
+@@ -0,0 +1,77 @@
++﻿using Dapper;
++using Mc2.CrudTest.Core.Application.Abstracation.DbContext;
++using Microsoft.Data.SqlClient;
++using Microsoft.Extensions.Configuration;
++using System;
++using System.Collections.Generic;
++using System.Data;
++using System.Linq;
++using System.Text;
++using System.Threading.Tasks;
++
++namespace Mc2.Crud.Persistanse.DbContexts
++{
++    public class ApplicationReadDbFacade : IApplicationReadDbFacade, IDisposable
++    {
++        private IDbConnection connection
++        {
++            get
++            {
++                if (connection == null)
++                {
++                    connection = new SqlConnection("");
++                    return connection;
++                }
++                if(connection.State!= ConnectionState.Open )
++                        connection.Open();
++                return connection;
++            }
++            set
++            {
++                connection = value;
++            }
++        }
++
++        private bool disposedValue = false;
++
++        public ApplicationReadDbFacade(IConfiguration configuration)
++        {
++            if(connection== null)
++            connection =
++                new SqlConnection(configuration.GetConnectionString("ApplicationReadDatabase"));
++            if (connection.State != ConnectionState.Open)
++                connection.Open();
++            
++        }
++
++        public void Dispose()
++        {
++            Dispose(disposing: true);
++            GC.SuppressFinalize(this);
++        }
++
++        public async Task<IReadOnlyList<T>> QueryAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null, CancellationToken cancellationToken = default)
++                            => (await connection.QueryAsync<T>(sql, param, transaction)).AsList();
++
++        public async Task<T> QueryFirstOrDefaultAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null, CancellationToken cancellationToken = default)
++            => await connection.QueryFirstOrDefaultAsync<T>(sql, param, transaction);
++
++        public async Task<T> QuerySingleAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null, CancellationToken cancellationToken = default)
++            => await connection.QuerySingleAsync<T>(sql, param, transaction);
++
++        protected virtual void Dispose(bool disposing)
++        {
++            if (!disposedValue)   // best practise diposing managed and unmanaged objects
++            {
++                if (disposing)
++                {
++                  
++                    connection.Dispose();
++                }
++
++                disposedValue = true;
++            }
++            connection.Dispose();
++        }
++    }
++}
+diff --git a/Mc2.Crud.Persistanse/DbContext/ApplicationWriteDbContext.cs b/Mc2.Crud.Persistanse/DbContext/ApplicationWriteDbContext.cs
+new file mode 100644
+index 0000000..2fd72ab
+--- /dev/null
++++ b/Mc2.Crud.Persistanse/DbContext/ApplicationWriteDbContext.cs
+@@ -0,0 +1,39 @@
++﻿using Mc2.CrudTest.Core.Application.Abstracation.DbContext;
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Text;
++using System.Threading.Tasks;
++using Microsoft.EntityFrameworkCore;
++using System.Data;
++using System.Data.Common;
++using Microsoft.EntityFrameworkCore.Infrastructure;
++using Microsoft.EntityFrameworkCore.ChangeTracking;
++
++namespace Mc2.Crud.Persistanse.DbContexts
++{
++    public class ApplicationWriteDbContext : DbContext, IApplicationWriteDbContext // this is just for write to db and for reading that i will using dapper
++    {
++        public IDbConnection Connection
++        {
++            get
++            {
++                DbConnection _db =Database.GetDbConnection();
++                if (_db.State!= ConnectionState.Open)
++                    _db.Open();
++                return _db;
++            }
++        }
++
++        public DbSet<CustomerEntity> Customers  { get; set; } = default!;
++
++
++        public ApplicationWriteDbContext(DbContextOptions<ApplicationWriteDbContext> options)
++                                            : base(options)
++        { }
++        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationWriteDbContext).Assembly);
++
++
++        //we can also ovverrride savechangeasync method to set default value for auditable entities
++    }
++}
+diff --git a/Mc2.Crud.Persistanse/DbContext/MyAppContext.cs b/Mc2.Crud.Persistanse/DbContext/MyAppContext.cs
+deleted file mode 100644
+index 12843f2..0000000
+--- a/Mc2.Crud.Persistanse/DbContext/MyAppContext.cs
++++ /dev/null
+@@ -1,22 +0,0 @@
+-﻿
+-using System.Data;
+-using Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
+-using Mc2.CrudTest.Core.Domain.Entities;
+-using Microsoft.EntityFrameworkCore;
+-using Microsoft.EntityFrameworkCore.Infrastructure;
+-
+-namespace Mc2.Crud.Persistanse.DbContext;
+-
+-public class MyAppContext : Microsoft.EntityFrameworkCore.DbContext , IDbContext 
+-{
+-    public MyAppContext(DbContextOptions<MyAppContext> options) : base(options)
+-    {
+-  
+-        
+-    }
+-    protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.ApplyConfigurationsFromAssembly(typeof(MyAppContext).Assembly);
+-    public IDbConnection Connection => Database.GetDbConnection();
+-    public DatabaseFacade datbase => Database;
+-    public DbSet<Customer> Customers { get;  }
+-
+-}
+\ No newline at end of file
+diff --git a/Mc2.Crud.Persistanse/DbContext/ReadRepository.cs b/Mc2.Crud.Persistanse/DbContext/ReadRepository.cs
+deleted file mode 100644
+index 058284a..0000000
+--- a/Mc2.Crud.Persistanse/DbContext/ReadRepository.cs
++++ /dev/null
+@@ -1,64 +0,0 @@
+-﻿using System;
+-using System.Collections.Generic;
+-using System.Data;
+-using System.Linq;
+-using System.Text;
+-using System.Threading.Tasks;
+-
+-using Dapper;
+-
+-using Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
+-using Mc2.CrudTest.Core.Domain.Entities;
+-
+-using Microsoft.Data.SqlClient;
+-using Microsoft.EntityFrameworkCore;
+-using Microsoft.EntityFrameworkCore.Infrastructure;
+-using Microsoft.Extensions.Configuration;
+-
+-namespace Mc2.Crud.Persistanse.DbContext
+-{
+-    public class ReadRepository<T> : IDisposable, IReadRepository<T> where T : class
+-    {
+-        public ReadRepository(IDbContext DbContext)
+-        {
+-            dbContext = DbContext;
+-        }
+-
+-        private readonly IDbContext dbContext;
+-
+-
+-        public async Task<IReadOnlyList<T>> QueryAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null, CancellationToken cancellationToken = default)
+-            => (await dbContext.datbase.GetDbConnection().QueryAsync<T>(sql, param, transaction)).AsList();
+-
+-        public async Task<T> QueryFirstOrDefaultAsync<T>(string sql, object? param = null,
+-            IDbTransaction? transaction = null, CancellationToken cancellationToken = default)
+-        {
+-            var test = await dbContext.datbase.GetDbConnection().QueryFirstOrDefaultAsync<T>(sql, param, transaction);
+-            return test;
+-        }
+-
+-        public async Task<T> QuerySingleAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null, CancellationToken cancellationToken = default)
+-            => await dbContext.datbase.GetDbConnection().QuerySingleAsync<T>(sql, param, transaction);
+-        private bool disposedValue;
+-        protected virtual void Dispose(bool disposing)
+-        {
+-
+-            if (!disposedValue)   // best practise diposing managed and unmanaged objects
+-            {
+-                if (disposing)
+-                {
+-
+-                    dbContext.datbase.GetDbConnection().Dispose();
+-                }
+-
+-                disposedValue = true;
+-            }
+-        }
+-        public void Dispose()
+-        {
+-            Dispose(disposing: true);
+-            GC.SuppressFinalize(this);
+-        }
+-    }
+-}
+-
+diff --git a/Mc2.Crud.Persistanse/DbContext/WriteCustomerRepository.cs b/Mc2.Crud.Persistanse/DbContext/WriteCustomerRepository.cs
+deleted file mode 100644
+index 605236c..0000000
+--- a/Mc2.Crud.Persistanse/DbContext/WriteCustomerRepository.cs
++++ /dev/null
+@@ -1,57 +0,0 @@
+-﻿
+-
+-using Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
+-using Mc2.CrudTest.Core.Domain.Entities;
+-using Microsoft.EntityFrameworkCore;
+-
+-
+-namespace Mc2.Crud.Persistanse.DbContext
+-{
+-    public class WriteCustomerRepository : IWriteCustomerRepository 
+-    {
+-        private readonly MyAppContext _myAppContext;
+-
+-        public WriteCustomerRepository(MyAppContext myAppContext)
+-        {
+-            _myAppContext = myAppContext;
+-
+-        }
+-        public async Task<int> SaveChangesAsync(CrudTest.Core.Domain.Entities.Customer entity)
+-        {
+-
+-
+-            await Task.WhenAll(entity.DispatchDomainEventsAsync());
+-
+-            return await _myAppContext.SaveChangesAsync();
+-        }
+-
+-        public async Task<int> AddAsync(Customer entity)
+-        {
+-
+-            _myAppContext.Add(entity);
+-            return await SaveChangesAsync(entity);
+-
+-        }
+-
+-        public async Task<int> UpdateAsync(Customer entity)
+-        {
+-
+-            var old =await  _myAppContext.Customers.Where(w => w.FirstName == entity.FirstName &&
+-                                                         w.LastName == entity.LastName &&
+-                                                         w.DateOfBirth == entity.DateOfBirth).SingleAsync();
+-
+-            _myAppContext.Entry(old).CurrentValues.SetValues(entity);
+-
+-
+-            return await SaveChangesAsync(entity);
+-
+-        }
+-
+-        public async Task DeleteAsync(Customer entity)
+-        {
+-            throw new NotImplementedException();
+-        }
+-
+-
+-    }
+-}
+diff --git a/Mc2.Crud.Persistanse/DependencyInjectionExtensions.cs b/Mc2.Crud.Persistanse/DependencyInjectionExtensions.cs
+index 93c59c0..615b3a8 100644
+--- a/Mc2.Crud.Persistanse/DependencyInjectionExtensions.cs
++++ b/Mc2.Crud.Persistanse/DependencyInjectionExtensions.cs
+@@ -1,33 +1,30 @@
+-﻿using Microsoft.EntityFrameworkCore;
++﻿using Mc2.Crud.Persistanse.DbContexts;
++using Mc2.CrudTest.Core.Application.Abstracation.DbContext;
++using Microsoft.EntityFrameworkCore;
++using Microsoft.Extensions.Configuration;
+ using Microsoft.Extensions.DependencyInjection;
+-using Mc2.Crud.Persistanse.DbContext;
+-using Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
+-using Microsoft.EntityFrameworkCore.Internal;
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Text;
++using System.Threading.Tasks;
+ 
+ namespace Mc2.CrudTest.Persistanse
+ {
+-  public static class DependencyInjectionExtensions
+-  {
+-    const string coonectionString =
+-            "Server =.; DataBase = Local; UID = app; PWD = app; Trusted_Connection = True; TrustServerCertificate = True";
+-
+-    public static IServiceCollection AddPersistenceLayer (this IServiceCollection services)
+-      {
+-        services.AddDbContext<MyAppContext> (options =>
+-                                                     options
+-                                                     .UseSqlServer (coonectionString)
+-                                                     .EnableSensitiveDataLogging (true)
+-                );
+-        services.AddScoped<IDbContext>(provider =>
++    public static  class DependencyInjectionExtensions
++    {
++        public static IServiceCollection AddPersistenceLayer(this IServiceCollection services)
+         {
+-            // Resolve the DbContext from the service provider
+-            var dbContext = provider.GetRequiredService<MyAppContext>();
+-            return dbContext;
+-        });
+-            services.AddScoped<IWriteCustomerRepository, WriteCustomerRepository> ();
+-            services.AddScoped(typeof(IReadRepository<>), typeof(ReadRepository<>));
++            services.AddDbContext<ApplicationWriteDbContext>(options =>
++                options
++                .UseSqlServer("DataBase=. ......................")
++                .EnableSensitiveDataLogging(true)
++                );
++
++            services.AddScoped<IApplicationWriteDbContext>(provider => provider.GetService<ApplicationWriteDbContext>() ?? throw new Exception("Could not get DB context."));
++            services.AddScoped<IApplicationReadDbFacade, ApplicationReadDbFacade>();
+ 
+             return services;
+-      }
+-  }
+-}
+\ No newline at end of file
++        }
++    }
++}
+diff --git a/Mc2.Crud.Persistanse/Mc2.Crud.Persistanse.csproj b/Mc2.Crud.Persistanse/Mc2.Crud.Persistanse.csproj
+index f6dcead..5466d32 100644
+--- a/Mc2.Crud.Persistanse/Mc2.Crud.Persistanse.csproj
++++ b/Mc2.Crud.Persistanse/Mc2.Crud.Persistanse.csproj
+@@ -1,36 +1,23 @@
+ ﻿<Project Sdk="Microsoft.NET.Sdk">
+ 
+   <PropertyGroup>
+-    <TargetFramework>net7.0</TargetFramework>
++    <TargetFramework>net6.0</TargetFramework>
+     <ImplicitUsings>enable</ImplicitUsings>
+     <Nullable>enable</Nullable>
+   </PropertyGroup>
+ 
+   <ItemGroup>
+-    <PackageReference Include="Dapper" Version="2.1.35" />
++    <PackageReference Include="Dapper" Version="2.0.151" />
+     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.11" />
+     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.11">
+       <PrivateAssets>all</PrivateAssets>
+       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+     </PackageReference>
+     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.11" />
+-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.11">
+-	    <PrivateAssets>all</PrivateAssets>
+-	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+-    </PackageReference>
+-
+-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.11">
+-	    <PrivateAssets>all</PrivateAssets>
+-	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+-    </PackageReference>
+   </ItemGroup>
+ 
+   <ItemGroup>
+     <ProjectReference Include="..\Mc2.CrudTest.Core.Application\Mc2.CrudTest.Core.Application.csproj" />
+   </ItemGroup>
+ 
+-  <ItemGroup>
+-    <Folder Include="Migrations\" />
+-  </ItemGroup>
+-
+ </Project>
+diff --git a/Mc2.Crud.Persistanse/Migrations/20240315190629_DDDConfigg2.Designer.cs b/Mc2.Crud.Persistanse/Migrations/20240315190629_DDDConfigg2.Designer.cs
+deleted file mode 100644
+index 09aa19f..0000000
+--- a/Mc2.Crud.Persistanse/Migrations/20240315190629_DDDConfigg2.Designer.cs
++++ /dev/null
+@@ -1,185 +0,0 @@
+-﻿// <auto-generated />
+-using System;
+-using Mc2.Crud.Persistanse.DbContext;
+-using Microsoft.EntityFrameworkCore;
+-using Microsoft.EntityFrameworkCore.Infrastructure;
+-using Microsoft.EntityFrameworkCore.Metadata;
+-using Microsoft.EntityFrameworkCore.Migrations;
+-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+-
+-#nullable disable
+-
+-namespace Mc2.Crud.Persistanse.Migrations
+-{
+-    [DbContext(typeof(MyAppContext))]
+-    [Migration("20240315190629_DDDConfigg2")]
+-    partial class DDDConfigg2
+-    {
+-        /// <inheritdoc />
+-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+-        {
+-#pragma warning disable 612, 618
+-            modelBuilder
+-                .HasAnnotation("ProductVersion", "7.0.11")
+-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+-
+-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+-
+-            modelBuilder.Entity("Mc2.CrudTest.Core.Domain.Entities.Customer", b =>
+-                {
+-                    b.Property<Guid>("Id")
+-                        .ValueGeneratedOnAdd()
+-                        .HasColumnType("uniqueidentifier");
+-
+-                    b.Property<string>("FullName")
+-                        .IsRequired()
+-                        .ValueGeneratedOnAddOrUpdate()
+-                        .HasMaxLength(255)
+-                        .HasColumnType("nvarchar(255)")
+-                        .HasColumnName("FullName")
+-                        .HasComputedColumnSql("CONCAT(FirstName, '-', LastName, '-', DateOfBirth)");
+-
+-                    b.HasKey("Id");
+-
+-                    b.HasIndex("FullName")
+-                        .IsUnique();
+-
+-                    b.ToTable("Customers");
+-                });
+-
+-            modelBuilder.Entity("Mc2.CrudTest.Core.Domain.Entities.Customer", b =>
+-                {
+-                    b.OwnsOne("Mc2.CrudTest.Core.Domain.ValueObjects.AccountNumber", "AccountNumber", b1 =>
+-                        {
+-                            b1.Property<Guid>("CustomerId")
+-                                .HasColumnType("uniqueidentifier");
+-
+-                            b1.Property<string>("Value")
+-                                .IsRequired()
+-                                .HasColumnType("nvarchar(max)")
+-                                .HasColumnName("AccountNumber");
+-
+-                            b1.HasKey("CustomerId");
+-
+-                            b1.ToTable("Customers");
+-
+-                            b1.WithOwner()
+-                                .HasForeignKey("CustomerId");
+-                        });
+-
+-                    b.OwnsOne("Mc2.CrudTest.Core.Domain.ValueObjects.DateOfBirth", "DateOfBirth", b1 =>
+-                        {
+-                            b1.Property<Guid>("CustomerId")
+-                                .HasColumnType("uniqueidentifier");
+-
+-                            b1.Property<string>("Value")
+-                                .IsRequired()
+-                                .HasMaxLength(10)
+-                                .HasColumnType("nvarchar(10)")
+-                                .HasColumnName("DateOfBirth");
+-
+-                            b1.HasKey("CustomerId");
+-
+-                            b1.ToTable("Customers");
+-
+-                            b1.WithOwner()
+-                                .HasForeignKey("CustomerId");
+-                        });
+-
+-                    b.OwnsOne("Mc2.CrudTest.Core.Domain.ValueObjects.Email", "Email", b1 =>
+-                        {
+-                            b1.Property<Guid>("CustomerId")
+-                                .HasColumnType("uniqueidentifier");
+-
+-                            b1.Property<string>("Value")
+-                                .IsRequired()
+-                                .HasMaxLength(256)
+-                                .HasColumnType("nvarchar(256)")
+-                                .HasColumnName("Email");
+-
+-                            b1.HasKey("CustomerId");
+-
+-                            b1.ToTable("Customers");
+-
+-                            b1.WithOwner()
+-                                .HasForeignKey("CustomerId");
+-                        });
+-
+-                    b.OwnsOne("Mc2.CrudTest.Core.Domain.ValueObjects.FirstName", "FirstName", b1 =>
+-                        {
+-                            b1.Property<Guid>("CustomerId")
+-                                .HasColumnType("uniqueidentifier");
+-
+-                            b1.Property<string>("Value")
+-                                .IsRequired()
+-                                .HasMaxLength(50)
+-                                .HasColumnType("nvarchar(50)")
+-                                .HasColumnName("FirstName");
+-
+-                            b1.HasKey("CustomerId");
+-
+-                            b1.ToTable("Customers");
+-
+-                            b1.WithOwner()
+-                                .HasForeignKey("CustomerId");
+-                        });
+-
+-                    b.OwnsOne("Mc2.CrudTest.Core.Domain.ValueObjects.LastName", "LastName", b1 =>
+-                        {
+-                            b1.Property<Guid>("CustomerId")
+-                                .HasColumnType("uniqueidentifier");
+-
+-                            b1.Property<string>("Value")
+-                                .IsRequired()
+-                                .HasMaxLength(50)
+-                                .HasColumnType("nvarchar(50)")
+-                                .HasColumnName("LastName");
+-
+-                            b1.HasKey("CustomerId");
+-
+-                            b1.ToTable("Customers");
+-
+-                            b1.WithOwner()
+-                                .HasForeignKey("CustomerId");
+-                        });
+-
+-                    b.OwnsOne("Mc2.CrudTest.Core.Domain.ValueObjects.PhoneNumber", "PhoneNumber", b1 =>
+-                        {
+-                            b1.Property<Guid>("CustomerId")
+-                                .HasColumnType("uniqueidentifier");
+-
+-                            b1.Property<decimal>("Value")
+-                                .HasMaxLength(13)
+-                                .HasColumnType("decimal(20,0)")
+-                                .HasColumnName("PhoneNumber");
+-
+-                            b1.HasKey("CustomerId");
+-
+-                            b1.ToTable("Customers");
+-
+-                            b1.WithOwner()
+-                                .HasForeignKey("CustomerId");
+-                        });
+-
+-                    b.Navigation("AccountNumber")
+-                        .IsRequired();
+-
+-                    b.Navigation("DateOfBirth")
+-                        .IsRequired();
+-
+-                    b.Navigation("Email")
+-                        .IsRequired();
+-
+-                    b.Navigation("FirstName")
+-                        .IsRequired();
+-
+-                    b.Navigation("LastName")
+-                        .IsRequired();
+-
+-                    b.Navigation("PhoneNumber")
+-                        .IsRequired();
+-                });
+-#pragma warning restore 612, 618
+-        }
+-    }
+-}
+diff --git a/Mc2.Crud.Persistanse/Migrations/20240315190629_DDDConfigg2.cs b/Mc2.Crud.Persistanse/Migrations/20240315190629_DDDConfigg2.cs
+deleted file mode 100644
+index 9e4099a..0000000
+--- a/Mc2.Crud.Persistanse/Migrations/20240315190629_DDDConfigg2.cs
++++ /dev/null
+@@ -1,46 +0,0 @@
+-﻿using System;
+-using Microsoft.EntityFrameworkCore.Migrations;
+-
+-#nullable disable
+-
+-namespace Mc2.Crud.Persistanse.Migrations
+-{
+-    /// <inheritdoc />
+-    public partial class DDDConfigg2 : Migration
+-    {
+-        /// <inheritdoc />
+-        protected override void Up(MigrationBuilder migrationBuilder)
+-        {
+-            migrationBuilder.CreateTable(
+-                name: "Customers",
+-                columns: table => new
+-                {
+-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+-                    FirstName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+-                    LastName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+-                    Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+-                    AccountNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
+-                    DateOfBirth = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+-                    PhoneNumber = table.Column<decimal>(type: "decimal(20,0)", maxLength: 13, nullable: false),
+-                    FullName = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false, computedColumnSql: "CONCAT(FirstName, '-', LastName, '-', DateOfBirth)")
+-                },
+-                constraints: table =>
+-                {
+-                    table.PrimaryKey("PK_Customers", x => x.Id);
+-                });
+-
+-            migrationBuilder.CreateIndex(
+-                name: "IX_Customers_FullName",
+-                table: "Customers",
+-                column: "FullName",
+-                unique: true);
+-        }
+-
+-        /// <inheritdoc />
+-        protected override void Down(MigrationBuilder migrationBuilder)
+-        {
+-            migrationBuilder.DropTable(
+-                name: "Customers");
+-        }
+-    }
+-}
+diff --git a/Mc2.Crud.Persistanse/Migrations/MyAppContextModelSnapshot.cs b/Mc2.Crud.Persistanse/Migrations/MyAppContextModelSnapshot.cs
+deleted file mode 100644
+index 6125317..0000000
+--- a/Mc2.Crud.Persistanse/Migrations/MyAppContextModelSnapshot.cs
++++ /dev/null
+@@ -1,182 +0,0 @@
+-﻿// <auto-generated />
+-using System;
+-using Mc2.Crud.Persistanse.DbContext;
+-using Microsoft.EntityFrameworkCore;
+-using Microsoft.EntityFrameworkCore.Infrastructure;
+-using Microsoft.EntityFrameworkCore.Metadata;
+-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+-
+-#nullable disable
+-
+-namespace Mc2.Crud.Persistanse.Migrations
+-{
+-    [DbContext(typeof(MyAppContext))]
+-    partial class MyAppContextModelSnapshot : ModelSnapshot
+-    {
+-        protected override void BuildModel(ModelBuilder modelBuilder)
+-        {
+-#pragma warning disable 612, 618
+-            modelBuilder
+-                .HasAnnotation("ProductVersion", "7.0.11")
+-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+-
+-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+-
+-            modelBuilder.Entity("Mc2.CrudTest.Core.Domain.Entities.Customer", b =>
+-                {
+-                    b.Property<Guid>("Id")
+-                        .ValueGeneratedOnAdd()
+-                        .HasColumnType("uniqueidentifier");
+-
+-                    b.Property<string>("FullName")
+-                        .IsRequired()
+-                        .ValueGeneratedOnAddOrUpdate()
+-                        .HasMaxLength(255)
+-                        .HasColumnType("nvarchar(255)")
+-                        .HasColumnName("FullName")
+-                        .HasComputedColumnSql("CONCAT(FirstName, '-', LastName, '-', DateOfBirth)");
+-
+-                    b.HasKey("Id");
+-
+-                    b.HasIndex("FullName")
+-                        .IsUnique();
+-
+-                    b.ToTable("Customers");
+-                });
+-
+-            modelBuilder.Entity("Mc2.CrudTest.Core.Domain.Entities.Customer", b =>
+-                {
+-                    b.OwnsOne("Mc2.CrudTest.Core.Domain.ValueObjects.AccountNumber", "AccountNumber", b1 =>
+-                        {
+-                            b1.Property<Guid>("CustomerId")
+-                                .HasColumnType("uniqueidentifier");
+-
+-                            b1.Property<string>("Value")
+-                                .IsRequired()
+-                                .HasColumnType("nvarchar(max)")
+-                                .HasColumnName("AccountNumber");
+-
+-                            b1.HasKey("CustomerId");
+-
+-                            b1.ToTable("Customers");
+-
+-                            b1.WithOwner()
+-                                .HasForeignKey("CustomerId");
+-                        });
+-
+-                    b.OwnsOne("Mc2.CrudTest.Core.Domain.ValueObjects.DateOfBirth", "DateOfBirth", b1 =>
+-                        {
+-                            b1.Property<Guid>("CustomerId")
+-                                .HasColumnType("uniqueidentifier");
+-
+-                            b1.Property<string>("Value")
+-                                .IsRequired()
+-                                .HasMaxLength(10)
+-                                .HasColumnType("nvarchar(10)")
+-                                .HasColumnName("DateOfBirth");
+-
+-                            b1.HasKey("CustomerId");
+-
+-                            b1.ToTable("Customers");
+-
+-                            b1.WithOwner()
+-                                .HasForeignKey("CustomerId");
+-                        });
+-
+-                    b.OwnsOne("Mc2.CrudTest.Core.Domain.ValueObjects.Email", "Email", b1 =>
+-                        {
+-                            b1.Property<Guid>("CustomerId")
+-                                .HasColumnType("uniqueidentifier");
+-
+-                            b1.Property<string>("Value")
+-                                .IsRequired()
+-                                .HasMaxLength(256)
+-                                .HasColumnType("nvarchar(256)")
+-                                .HasColumnName("Email");
+-
+-                            b1.HasKey("CustomerId");
+-
+-                            b1.ToTable("Customers");
+-
+-                            b1.WithOwner()
+-                                .HasForeignKey("CustomerId");
+-                        });
+-
+-                    b.OwnsOne("Mc2.CrudTest.Core.Domain.ValueObjects.FirstName", "FirstName", b1 =>
+-                        {
+-                            b1.Property<Guid>("CustomerId")
+-                                .HasColumnType("uniqueidentifier");
+-
+-                            b1.Property<string>("Value")
+-                                .IsRequired()
+-                                .HasMaxLength(50)
+-                                .HasColumnType("nvarchar(50)")
+-                                .HasColumnName("FirstName");
+-
+-                            b1.HasKey("CustomerId");
+-
+-                            b1.ToTable("Customers");
+-
+-                            b1.WithOwner()
+-                                .HasForeignKey("CustomerId");
+-                        });
+-
+-                    b.OwnsOne("Mc2.CrudTest.Core.Domain.ValueObjects.LastName", "LastName", b1 =>
+-                        {
+-                            b1.Property<Guid>("CustomerId")
+-                                .HasColumnType("uniqueidentifier");
+-
+-                            b1.Property<string>("Value")
+-                                .IsRequired()
+-                                .HasMaxLength(50)
+-                                .HasColumnType("nvarchar(50)")
+-                                .HasColumnName("LastName");
+-
+-                            b1.HasKey("CustomerId");
+-
+-                            b1.ToTable("Customers");
+-
+-                            b1.WithOwner()
+-                                .HasForeignKey("CustomerId");
+-                        });
+-
+-                    b.OwnsOne("Mc2.CrudTest.Core.Domain.ValueObjects.PhoneNumber", "PhoneNumber", b1 =>
+-                        {
+-                            b1.Property<Guid>("CustomerId")
+-                                .HasColumnType("uniqueidentifier");
+-
+-                            b1.Property<decimal>("Value")
+-                                .HasMaxLength(13)
+-                                .HasColumnType("decimal(20,0)")
+-                                .HasColumnName("PhoneNumber");
+-
+-                            b1.HasKey("CustomerId");
+-
+-                            b1.ToTable("Customers");
+-
+-                            b1.WithOwner()
+-                                .HasForeignKey("CustomerId");
+-                        });
+-
+-                    b.Navigation("AccountNumber")
+-                        .IsRequired();
+-
+-                    b.Navigation("DateOfBirth")
+-                        .IsRequired();
+-
+-                    b.Navigation("Email")
+-                        .IsRequired();
+-
+-                    b.Navigation("FirstName")
+-                        .IsRequired();
+-
+-                    b.Navigation("LastName")
+-                        .IsRequired();
+-
+-                    b.Navigation("PhoneNumber")
+-                        .IsRequired();
+-                });
+-#pragma warning restore 612, 618
+-        }
+-    }
+-}
+diff --git a/Mc2.CrudTest.AcceptanceTests/Mc2.CrudTest.AcceptanceTests.csproj b/Mc2.CrudTest.AcceptanceTests/Mc2.CrudTest.AcceptanceTests.csproj
+index fa9f0e3..b952ff7 100644
+--- a/Mc2.CrudTest.AcceptanceTests/Mc2.CrudTest.AcceptanceTests.csproj
++++ b/Mc2.CrudTest.AcceptanceTests/Mc2.CrudTest.AcceptanceTests.csproj
+@@ -1,7 +1,7 @@
+ <Project Sdk="Microsoft.NET.Sdk">
+ 
+     <PropertyGroup>
+-        <TargetFramework>net7.0</TargetFramework>
++        <TargetFramework>net6.0</TargetFramework>
+         <Nullable>enable</Nullable>
+         <ImplicitUsings>enable</ImplicitUsings>
+     </PropertyGroup>
+diff --git a/Mc2.CrudTest.Core.Application/Abstracation/Behavior/CreateUpdateCustomerValidator.cs b/Mc2.CrudTest.Core.Application/Abstracation/Behavior/CreateUpdateCustomerValidator.cs
+deleted file mode 100644
+index 55c074d..0000000
+--- a/Mc2.CrudTest.Core.Application/Abstracation/Behavior/CreateUpdateCustomerValidator.cs
++++ /dev/null
+@@ -1,59 +0,0 @@
+-﻿using System;
+-using System.Collections.Generic;
+-using System.Linq;
+-using System.Text;
+-using System.Threading.Tasks;
+-using FluentValidation;
+-using Mc2.CrudTest.Core.Application.Customer;
+-using Mc2.CrudTest.Core.Application.Customer.Command.CreateCustomer;
+-using Mc2.CrudTest.Core.Application.Services;
+-using PhoneNumbers;
+-
+-namespace Mc2.CrudTest.Core.Application.Abstracation.Behavior
+-{
+-    public class CreateUpdateCustomerValidator : AbstractValidator<CreateCustomerCommand>
+-    {
+-        private readonly IValidateService _validateService;
+-
+-        public CreateUpdateCustomerValidator(IValidateService validateService)
+-        {
+-            _validateService = validateService;
+-            RuleFor(f => f.Customer!.PhoneNumber).MustAsync(ValidatePhoneNumber)
+-                .WithMessage("Phone number is not local valid mobile number");
+-            RuleFor(w => w.Customer).MustAsync(ValidateFullname)
+-                .WithMessage("FirstName and LastName and DateBirth Duplicated");
+-            RuleFor(f => f.Customer.Email).MustAsync(ValidateEmailUniqe)
+-                .WithMessage("Email must be Uniq in Database");
+-        }
+-
+-        private  Task<bool> ValidateEmailUniqe(string email, CancellationToken arg2)
+-        {
+-            var res =  _validateService.CheckCustomerExsistByEmail(email);
+-            return Task.FromResult(res);
+-        }
+-
+-        private  Task<bool> ValidateFullname(CustomerViewModel arg1, CancellationToken arg2)
+-        {
+-            var exists =
+-                _validateService.CheckCustomerExsistByFullName(arg1.FirstName, arg1.LastName, arg1.DateOfBirth);
+-                return Task.FromResult(exists);
+-        }
+-
+-        private  Task<bool> ValidatePhoneNumber(string? arg1, CancellationToken token)
+-        {
+-                if ( arg1 == null ) throw new ArgumentNullException (nameof (arg1));
+-                PhoneNumberUtil phoneNumberUtil = PhoneNumberUtil.GetInstance();
+-            try
+-            
+-            {
+-                var result =   phoneNumberUtil.IsPossibleNumber(arg1.ToString(), "IR");
+-
+-                return Task.FromResult(result);
+-            }
+-            catch
+-            {
+-                return Task.FromResult(false);
+-            }
+-        }
+-    }
+-}
+diff --git a/Mc2.CrudTest.Core.Application/Abstracation/Behavior/ValidationBehavior.cs b/Mc2.CrudTest.Core.Application/Abstracation/Behavior/ValidationBehavior.cs
+deleted file mode 100644
+index cd4324c..0000000
+--- a/Mc2.CrudTest.Core.Application/Abstracation/Behavior/ValidationBehavior.cs
++++ /dev/null
+@@ -1,46 +0,0 @@
+-﻿using FluentValidation;
+-
+-using Mc2.CrudTest.Core.Domain.Core.Exceptions;
+-using Mc2.CrudTest.Core.Domain.Core.Validations;
+-
+-using MediatR;
+-
+-namespace Mc2.CrudTest.Core.Application.Abstracation.Behavior;
+-
+-public sealed class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse> where TRequest : notnull
+-{
+-    public ValidationBehavior(IEnumerable<IValidator<TRequest>> validators)
+-    {
+-        _validators = validators;
+-    }
+-
+-    private readonly IEnumerable<IValidator<TRequest>> _validators;
+-
+-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next,
+-        CancellationToken cancellationToken)
+-    {
+-        //pre
+-            // ReSharper disable once HeapView.ObjectAllocation.Evident
+-            var context = new ValidationContext<TRequest>(request);
+-            if ( context == null ) throw new ArgumentNullException (nameof (context));
+-            var validationFails =
+-                            await Task.WhenAll (_validators.Select (v => v.ValidateAsync (context, cancellationToken)));
+-
+-        var errors = validationFails.Where(rtesult => !rtesult.IsValid)
+-            .SelectMany(rtesult => rtesult.Errors)
+-            .Select(validationFailer =>
+-                new ValidationError(validationFailer.PropertyName, validationFailer.ErrorMessage))
+-            .ToList();
+-        if (errors.Any())
+-        {
+-            //or return GenericResponse<ValidationError>
+-            throw new CustomerValidateException(errors);
+-        }
+-
+-        var response = await next();
+-
+-        //post
+-
+-        return response;
+-    }
+-}
+\ No newline at end of file
+diff --git a/Mc2.CrudTest.Core.Application/Abstracation/DbContext/CustomerEntity.cs b/Mc2.CrudTest.Core.Application/Abstracation/DbContext/CustomerEntity.cs
+new file mode 100644
+index 0000000..2c9bd24
+--- /dev/null
++++ b/Mc2.CrudTest.Core.Application/Abstracation/DbContext/CustomerEntity.cs
+@@ -0,0 +1,15 @@
++﻿using Mc2.CrudTest.Core.Application.Models;
++
++namespace Mc2.CrudTest.Core.Application.Abstracation.DbContext
++{
++    public class CustomerEntity : IDbEntity
++    {
++        public int Id { get; set; }
++        public string FirstName { get; set; }
++        public string LastName { get; set; }
++        public string DateOfBirth { get; set; }
++        public string PhoneNumber { get; set; }
++        public string Email { get; set; }
++        public string BankAccountNumber { get; set; }
++    }
++}
+\ No newline at end of file
+diff --git a/Mc2.CrudTest.Core.Application/Abstracation/DbContext/IApplicationReadDbFacade.cs b/Mc2.CrudTest.Core.Application/Abstracation/DbContext/IApplicationReadDbFacade.cs
+new file mode 100644
+index 0000000..46fee70
+--- /dev/null
++++ b/Mc2.CrudTest.Core.Application/Abstracation/DbContext/IApplicationReadDbFacade.cs
+@@ -0,0 +1,18 @@
++﻿using System;
++using System.Collections.Generic;
++using System.Data;
++using System.Linq;
++using System.Text;
++using System.Threading.Tasks;
++
++namespace Mc2.CrudTest.Core.Application.Abstracation.DbContext
++{
++    public interface IApplicationReadDbFacade
++    {
++        Task<IReadOnlyList<T>> QueryAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null, CancellationToken cancellationToken = default);
++
++        Task<T> QueryFirstOrDefaultAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null, CancellationToken cancellationToken = default);
++
++        Task<T> QuerySingleAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null, CancellationToken cancellationToken = default);
++    }
++}
+diff --git a/Mc2.CrudTest.Core.Application/Abstracation/DbContext/IApplicationWriteDbContext.cs b/Mc2.CrudTest.Core.Application/Abstracation/DbContext/IApplicationWriteDbContext.cs
+new file mode 100644
+index 0000000..a96eee5
+--- /dev/null
++++ b/Mc2.CrudTest.Core.Application/Abstracation/DbContext/IApplicationWriteDbContext.cs
+@@ -0,0 +1,24 @@
++﻿using Microsoft.EntityFrameworkCore;
++using Microsoft.EntityFrameworkCore.ChangeTracking;
++using Microsoft.EntityFrameworkCore.Infrastructure;
++using System;
++using System.Collections.Generic;
++using System.Data;
++using System.Linq;
++using System.Text;
++using System.Threading.Tasks;
++
++namespace Mc2.CrudTest.Core.Application.Abstracation.DbContext
++{
++    public interface IApplicationWriteDbContext
++    {
++        IDbConnection Connection { get; }
++        DbSet<CustomerEntity> Customers { get; }
++        EntityEntry Entry(object entity);
++        DatabaseFacade Database { get; }
++
++        EntityEntry<TEntity> Entry<TEntity>(TEntity entity) where TEntity : class;
++
++        Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
++    }
++}
+diff --git a/Mc2.CrudTest.Core.Application/Abstracation/Mapping/IDbEntityToDomainEntityMapper.cs b/Mc2.CrudTest.Core.Application/Abstracation/Mapping/IDbEntityToDomainEntityMapper.cs
+new file mode 100644
+index 0000000..28963a7
+--- /dev/null
++++ b/Mc2.CrudTest.Core.Application/Abstracation/Mapping/IDbEntityToDomainEntityMapper.cs
+@@ -0,0 +1,15 @@
++﻿using Mc2.CrudTest.Core.Application.Models;
++using Mc2.CrudTest.Core.Domain.Abstracation.Models;
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Text;
++using System.Threading.Tasks;
++
++namespace Mc2.CrudTest.Core.Application.Abstracation.Mapping
++{
++    public interface IDbEntityToDomainEntityMapper<TDbEntity, TDomainEntity> where TDomainEntity : IDomainEntity where TDbEntity : IDbEntity
++    {
++        TDomainEntity Map(TDbEntity source);
++    }
++}
+diff --git a/Mc2.CrudTest.Core.Application/Abstracation/Mapping/IDbEntityToValueObjectMapper.cs b/Mc2.CrudTest.Core.Application/Abstracation/Mapping/IDbEntityToValueObjectMapper.cs
+new file mode 100644
+index 0000000..03b7dd8
+--- /dev/null
++++ b/Mc2.CrudTest.Core.Application/Abstracation/Mapping/IDbEntityToValueObjectMapper.cs
+@@ -0,0 +1,15 @@
++﻿using Mc2.CrudTest.Core.Application.Models;
++using Mc2.CrudTest.Core.Domain.Abstracation.Models;
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Text;
++using System.Threading.Tasks;
++
++namespace Mc2.CrudTest.Core.Application.Abstracation.Mapping
++{
++   public interface IDbEntityToValueObjectMapper<TDbEntity, TValueObject> where TValueObject : IValueObject where TDbEntity : IDbEntity
++    {
++        TValueObject Map(TDbEntity source);
++    }
++}
+diff --git a/Mc2.CrudTest.Core.Application/Abstracation/Mapping/IViewModelToDbEntityMapper.cs b/Mc2.CrudTest.Core.Application/Abstracation/Mapping/IViewModelToDbEntityMapper.cs
+new file mode 100644
+index 0000000..4617d35
+--- /dev/null
++++ b/Mc2.CrudTest.Core.Application/Abstracation/Mapping/IViewModelToDbEntityMapper.cs
+@@ -0,0 +1,37 @@
++﻿using Mc2.CrudTest.Core.Application.Abstracation.DbContext;
++using Mc2.CrudTest.Core.Application.Customer;
++using Mc2.CrudTest.Core.Application.Models;
++using Mc2.CrudTest.Core.Domain.ValueObjects;
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Text;
++using System.Threading.Tasks;
++
++namespace Mc2.CrudTest.Core.Application.Abstracation.Mapping
++{
++    public interface IViewModelToDbEntityMapper<TViewModel, TDbEntity> where TViewModel : IViewModel where TDbEntity : IDbEntity
++    {
++        TDbEntity Map(TViewModel source);
++
++        void Map(TViewModel source, TDbEntity destination);
++    }
++    public static class ViewModelToDbEntityMapper
++    {
++
++        public static CustomerEntity customerMap(CustomerViewModel customerViewModel)
++        {
++
++            return new CustomerEntity
++            {
++                FirstName = FirstName.Create(customerViewModel.FirstName).ToString(),
++                LastName = LastName.Create(customerViewModel.LastName).ToString(),
++                DateOfBirth = customerViewModel.DateOfBirth, // we could use same way to create value object and validate
++                PhoneNumber = customerViewModel.PhoneNumber, // we must using google validate that it should be infrastructure layer or validating in domain layer and i should check phone numbers start with 00 if i using ulong // i want to use nvarchar(14) with create fluentApi Config 
++                BankAccountNumber = customerViewModel.BankAccountNumber,
++                Email = customerViewModel.Email,
++            };
++        }
++    }
++
++}
+diff --git a/Mc2.CrudTest.Core.Application/Abstracation/NewRepositoryPattern/IDbContext.cs b/Mc2.CrudTest.Core.Application/Abstracation/NewRepositoryPattern/IDbContext.cs
+deleted file mode 100644
+index 031dc1f..0000000
+--- a/Mc2.CrudTest.Core.Application/Abstracation/NewRepositoryPattern/IDbContext.cs
++++ /dev/null
+@@ -1,13 +0,0 @@
+-﻿using System.Data;
+-using Microsoft.EntityFrameworkCore;
+-using Microsoft.EntityFrameworkCore.Infrastructure;
+-
+-namespace Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
+-
+-public interface IDbContext
+-{
+-   
+-    DatabaseFacade datbase { get; }
+-    DbSet<Domain.Entities.Customer> Customers { get; }
+-  
+-}
+\ No newline at end of file
+diff --git a/Mc2.CrudTest.Core.Application/Abstracation/NewRepositoryPattern/IReadRepository.cs b/Mc2.CrudTest.Core.Application/Abstracation/NewRepositoryPattern/IReadRepository.cs
+deleted file mode 100644
+index 9f833a6..0000000
+--- a/Mc2.CrudTest.Core.Application/Abstracation/NewRepositoryPattern/IReadRepository.cs
++++ /dev/null
+@@ -1,20 +0,0 @@
+-﻿using System.Data;
+-using Ardalis.Specification;
+-using Mc2.CrudTest.Core.Domain.Abstracation.Models;
+-using Mc2.CrudTest.Core.Domain.Models;
+-
+-namespace Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
+-
+-public interface IReadRepository<T> where T : class//                : IReadRepositoryBase<T> where T : class
+-{
+-
+-    Task<IReadOnlyList<T>> QueryAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null,
+-        CancellationToken cancellationToken = default);
+-
+-    Task<T> QueryFirstOrDefaultAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null,
+-        CancellationToken cancellationToken = default);
+-
+-    Task<T> QuerySingleAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null,
+-        CancellationToken cancellationToken = default);
+-
+-}
+\ No newline at end of file
+diff --git a/Mc2.CrudTest.Core.Application/Abstracation/NewRepositoryPattern/IWriteCustomerRepository.cs b/Mc2.CrudTest.Core.Application/Abstracation/NewRepositoryPattern/IWriteCustomerRepository.cs
+deleted file mode 100644
+index 9e6d56c..0000000
+--- a/Mc2.CrudTest.Core.Application/Abstracation/NewRepositoryPattern/IWriteCustomerRepository.cs
++++ /dev/null
+@@ -1,17 +0,0 @@
+-﻿using Ardalis.Specification;
+-using Mc2.CrudTest.Core.Domain.Abstracation.Models;
+-using Microsoft.EntityFrameworkCore.ChangeTracking;
+-
+-namespace Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
+-public interface IWriteCustomerRepository   // IReadRepositoryBase<T> where T : class, IAggregateRoot
+-{
+-    Task<int> SaveChangesAsync(Domain.Entities.Customer entity);
+-    Task<int> AddAsync(Domain.Entities.Customer entity);
+-    Task<int> UpdateAsync(Domain.Entities.Customer entity);
+-    Task DeleteAsync(Domain.Entities.Customer entity);
+-
+-
+-
+-
+-
+-}
+\ No newline at end of file
+diff --git a/Mc2.CrudTest.Core.Application/Class1.cs b/Mc2.CrudTest.Core.Application/Class1.cs
+new file mode 100644
+index 0000000..f4f1bda
+--- /dev/null
++++ b/Mc2.CrudTest.Core.Application/Class1.cs
+@@ -0,0 +1,7 @@
++﻿namespace Mc2.CrudTest.Core.Application
++{
++    public class Class1
++    {
++
++    }
++}
+\ No newline at end of file
+diff --git a/Mc2.CrudTest.Core.Application/Customer/Command/CreateCustomer/CreateCustomerCommand.cs b/Mc2.CrudTest.Core.Application/Customer/Command/CreateCustomer/CreateCustomerCommand.cs
+index e61d91d..fa6742e 100644
+--- a/Mc2.CrudTest.Core.Application/Customer/Command/CreateCustomer/CreateCustomerCommand.cs
++++ b/Mc2.CrudTest.Core.Application/Customer/Command/CreateCustomer/CreateCustomerCommand.cs
+@@ -1,94 +1,66 @@
+-﻿using AutoMapper;
++﻿using Mc2.CrudTest.Core.Application.Abstracation.DbContext;
+ using MediatR;
+-using Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
+-using Mc2.CrudTest.Core.Application.Services;
+-using Mc2.CrudTest.Core.Domain.Core.Exceptions;
+-using Mc2.CrudTest.Core.Domain.Models;
++using Microsoft.EntityFrameworkCore;
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Text;
++using System.Threading.Tasks;
++using Microsoft.EntityFrameworkCore.Storage;
++using Mc2.CrudTest.Core.Application.Abstracation.Mapping;
+ 
+-
+-namespace Mc2.CrudTest.Core.Application.Customer.Command.CreateCustomer ;
+-
+-  public class CreateCustomerCommand : IRequest<Response>
+-  {
+-    public CustomerViewModel? Customer { get; set; }
+-
+-    public class CreateCustomerCommandHandler : IRequestHandler<CreateCustomerCommand, Response>
++namespace Mc2.CrudTest.Core.Application.Customer.Command.CreateCustomer
++{
++    public class AddOrUpdateCustomerCommand : IRequest<CustomerViewModel>
+     {
+-      public CreateCustomerCommandHandler
+-              (
+-              IWriteCustomerRepository repository,  ICustomerService iCustomerService,
+-              IDbContext dbContext)
++        public CustomerViewModel Customer { get; init; } = default!;
++        public class AddOrUpdateCustomerCommandHandler : IRequestHandler<AddOrUpdateCustomerCommand, CustomerViewModel>
+         {
+-          _repository = repository;
+-          _iCustomerService = iCustomerService;
+-          _dbContext = dbContext;
+-     
+-        }
++            private readonly IApplicationWriteDbContext context;
++          //  private readonly IViewModelToDbEntityMapper<CustomerViewModel, CustomerEntity> customerMapper;
++          //  simple way using static class for mapping and creating domainModel with ObjectValues ==> forget mapster pattern imp
++             
+ 
++            public AddOrUpdateCustomerCommandHandler(IApplicationWriteDbContext context, IViewModelToDbEntityMapper<CustomerViewModel, CustomerEntity> customerMapper)
++            {
++                this.context = context;
++               // this.customerMapper = customerMapper;   
++            }
+ 
+-      private readonly IWriteCustomerRepository _repository;
+-      private readonly IMapper _mapper;
+-      private readonly ICustomerService _iCustomerService;
+-      private readonly IDbContext _dbContext;
+-      private Response _response ;
+-
+-      public async Task<Response> Handle
+-              (
+-              CreateCustomerCommand request,
+-              CancellationToken cancellationToken)
+-        {
+-          Domain.Entities.Customer customerEntityMapped;
+-          if ( request == null ) throw new ArgumentNullException ($"request is Null...");
+-          {
+-            var entityMapped = request.Customer ?? throw new ArgumentNullException (nameof (Customer));
+-                                       customerEntityMapped = Domain.Entities.Customer.Create (entityMapped.FirstName,
+-                                                                                               entityMapped.LastName,
+-                                                                                               entityMapped.Email,
+-                                                                                               entityMapped.PhoneNumber,
+-                                                                                               entityMapped.BankAccountNumber,
+-                                                                                               entityMapped.DateOfBirth
+-                                                                      );
+-          }
+-          // var ebitymaped = _mapper.Map<Domain.Entities.Customer>(request.Customer);
+-          var commandType = await _iCustomerService.GetCommandType ();
+-          await using ( var trans = await _dbContext.datbase.BeginTransactionAsync (cancellationToken) )
+-          {
+-            try
++            public async Task<CustomerViewModel> Handle(AddOrUpdateCustomerCommand request, CancellationToken cancellationToken)
+             {
+-              if ( string.Equals (commandType, Enum.GetName (CommandTypeEnum.Update),
+-                                  StringComparison.CurrentCultureIgnoreCase) ) // one of this check is enoph 
+-              {
+-                // this is not nessecary to using clone way... because i was handling event part in domain creating moment just in Unit save changes i will publish event // Actulyy i was impiliment stronger domain with dispachers event (more event with some speacial event) that wasnt need only one event publishing (means to event storing) was inophe
+-                // customerEntityMapped.AddDomainEvent(new CustomerUpdatedEvent(customerEntityMapped.CloneWith(""""""""""""""""""));
+-                // Update.
+-                // this was good for know Add or Update ...
+-                //that header was nor nessecary just i must attention Customer Guid when i want to create that.
++                //to impliment Event storing i could using rabbitMQ to store events there or i simply create event table and make record for any event there // i am sorry i didnt have time to imp thats
++                // PRESENTATION/APPLICATION LAYER
++                var customerViewModel = request.Customer;
+ 
+-                var result = await _repository.UpdateAsync (customerEntityMapped);
+-                _response = Response.Create (202, "Customer Updated", true) ?? throw new NullReferenceException();
+-              }
+-              else
+-              {
+-                var result = await _repository.AddAsync (customerEntityMapped);
+-                _response = Response.Create (201, "Customer Created", true) ?? throw new NullReferenceException();
+-                }
++                // PERSISTENCE LAYER
++                var customerAdded = false;
++                using (var transaction = await context.Database.BeginTransactionAsync(cancellationToken))
++                {
++                    var sqlTransaction = transaction.GetDbTransaction();
++                    var customerEntity = await context.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.FirstName == request.Customer.FirstName && c.LastName== request.Customer.LastName && c.DateOfBirth == request.Customer.DateOfBirth, cancellationToken: cancellationToken);
++                    if (customerEntity != null)
++                    {
++                        // Update.
++                        customerEntity= ViewModelToDbEntityMapper.customerMap(customerViewModel);
++                         context.Customers.Update(customerEntity);
++                        context.Entry(customerEntity).State = customerAdded ? EntityState.Modified : EntityState.Modified;
++                    }
++                    else
++                    {
++                        // Add.
++                        customerEntity = ViewModelToDbEntityMapper.customerMap(customerViewModel);
++                        customerAdded = true;
++                        await context.Customers.AddAsync(customerEntity, cancellationToken);
++                        context.Entry(customerEntity).State = customerAdded ? EntityState.Added : EntityState.Modified;
++                    }
+ 
+-              await trans.CommitAsync (cancellationToken);
+-            }
+-            catch ( Exception e )
+-            {
+-              await trans.RollbackAsync (cancellationToken);
+-              throw new CustomNotResultException (NotResultTypeEnum.InternalFail);
+-            }
+-          }
+ 
+-          return _response;
++                    await context.SaveChangesAsync(cancellationToken);
++                    await transaction.CommitAsync(cancellationToken);
++                }
++                return customerViewModel;
++            }
+         }
+     }
+-  }
+-
+-  public enum CommandTypeEnum
+-  {
+-    Update = 1,
+-    Insert = 2
+-  }
+\ No newline at end of file
++}
+\ No newline at end of file
+diff --git a/Mc2.CrudTest.Core.Application/Customer/Command/CreateCustomer/CreateCustomerCommandHandler.cs b/Mc2.CrudTest.Core.Application/Customer/Command/CreateCustomer/CreateCustomerCommandHandler.cs
+new file mode 100644
+index 0000000..4d7f02c
+--- /dev/null
++++ b/Mc2.CrudTest.Core.Application/Customer/Command/CreateCustomer/CreateCustomerCommandHandler.cs
+@@ -0,0 +1,23 @@
++﻿using Mc2.CrudTest.Core.Domain.Abstracation;
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Text;
++using System.Threading.Tasks;
++using Mc2.CrudTest.Core.Domain.Entities;
++
++namespace Mc2.CrudTest.Core.Application.Customer.Command.CreateCustomer
++{
++    //public sealed class CreateCustomerCommandHandler :ICommandHandler<CreateCustomerCommand , Guid>
++    //{
++    //    private readonly ICustomrtRepository _customrtRepository;
++    //    private readonly IUnitOfWorks _unitOfWorks ;
++    //    public async Task<Guid> Handle (CreateCustomerCommand request ,CancellationToken cancellationToken)
++    //    {
++    //        var Customer = new Mc2.CrudTest.Core.Domain.Entities.Customer(Guid.NewGuid () , request.FirstName , request.LastName , request.DateOfBrith ,request.PhoneNumber,request.Email , request.BankAccountNumber);
++    //    _customrtRepository.insert(Customer);
++    //        await _unitOfWorks.SaveChangesAsync(cancellationToken);
++    //        return Customer.Id;
++    //    }
++    //}
++}
+diff --git a/Mc2.CrudTest.Core.Application/Customer/Command/DeleteCustomer/DeleteCustomerCommand.cs b/Mc2.CrudTest.Core.Application/Customer/Command/DeleteCustomer/DeleteCustomerCommand.cs
+index d1aef4b..295795c 100644
+--- a/Mc2.CrudTest.Core.Application/Customer/Command/DeleteCustomer/DeleteCustomerCommand.cs
++++ b/Mc2.CrudTest.Core.Application/Customer/Command/DeleteCustomer/DeleteCustomerCommand.cs
+@@ -1,4 +1,4 @@
+-﻿
++﻿using Mc2.CrudTest.Core.Application.Abstracation.DbContext;
+ using MediatR;
+ using System;
+ using System.Collections.Generic;
+@@ -8,28 +8,28 @@ using System.Threading.Tasks;
+ 
+ namespace Mc2.CrudTest.Core.Application.Customer.Command.DeleteCustomer
+ {
+-    //public class DeleteCustomerCommand : IRequest<bool>
+-    //{
+-    //    public CustomerViewModel Customer { get; set; } = default;
+-    //    public class DeleteCustomerCommandHandler : IRequestHandler<DeleteCustomerCommand, bool>
+-    //    {
+-    //        private readonly IApplicationWriteDbContext context;
++    public class DeleteCustomerCommand : IRequest<bool>
++    {
++        public CustomerViewModel Customer { get; set; } = default;
++        public class DeleteCustomerCommandHandler : IRequestHandler<DeleteCustomerCommand, bool>
++        {
++            private readonly IApplicationWriteDbContext context;
+ 
+-    //        public DeleteCustomerCommandHandler(IApplicationWriteDbContext context)
+-    //        {
+-    //            this.context = context;
+-    //        }
++            public DeleteCustomerCommandHandler(IApplicationWriteDbContext context)
++            {
++                this.context = context;
++            }
+ 
+-    //        public Task<bool> Handle(DeleteCustomerCommand request, CancellationToken cancellationToken)
+-    //        {
+-    //            var CustomerViewModel = request.Customer;
+-    //            //context.Customers.Remove(new CustomerEntity { FirstName = CustomerViewModel.FirstName, LastName = CustomerViewModel.LastName, DateOfBirth = CustomerViewModel.DateOfBirth });
+-    //            //context.SaveChangesAsync();
+-    //            return (Task<bool>)Task.CompletedTask;
+-    //            // ofcourse it was better if i create IsRemoved property and do changing the value to zero 
++            public Task<bool> Handle(DeleteCustomerCommand request, CancellationToken cancellationToken)
++            {
++                var CustomerViewModel = request.Customer;
++                context.Customers.Remove(new CustomerEntity { FirstName = CustomerViewModel.FirstName, LastName = CustomerViewModel.LastName, DateOfBirth = CustomerViewModel.DateOfBirth });
++                context.SaveChangesAsync();
++                return (Task<bool>)Task.CompletedTask;
++                // ofcourse it was better if i create IsRemoved property and do changing the value to zero 
+                 
+-    //        }
+-    //    }
++            }
++        }
+ 
+-    //}
++    }
+ }
+diff --git a/Mc2.CrudTest.Core.Application/Customer/CustomerViewModel.cs b/Mc2.CrudTest.Core.Application/Customer/CustomerViewModel.cs
+index a9c009d..a0768a0 100644
+--- a/Mc2.CrudTest.Core.Application/Customer/CustomerViewModel.cs
++++ b/Mc2.CrudTest.Core.Application/Customer/CustomerViewModel.cs
+@@ -7,8 +7,10 @@ using System.Threading.Tasks;
+ 
+ namespace Mc2.CrudTest.Core.Application.Customer
+ {
+-    public class CustomerViewModel : ViewModel
+-    {   public string FirstName { get; set; }
++    public class CustomerViewModel : IViewModel
++    {
++        public int Id { get; set; }
++        public string FirstName { get; set; }
+         public string LastName { get; set; }
+         public string DateOfBirth { get; set; }
+         public string PhoneNumber { get; set; }
+diff --git a/Mc2.CrudTest.Core.Application/Customer/Event/CustomerCreatedEventHandler.cs b/Mc2.CrudTest.Core.Application/Customer/Event/CustomerCreatedEventHandler.cs
+deleted file mode 100644
+index e1e51ee..0000000
+--- a/Mc2.CrudTest.Core.Application/Customer/Event/CustomerCreatedEventHandler.cs
++++ /dev/null
+@@ -1,61 +0,0 @@
+-﻿using System;
+-using System.Collections.Generic;
+-using System.Linq;
+-using System.Text;
+-using System.Text.Json;
+-using System.Text.Json.Nodes;
+-using System.Text.Json.Serialization;
+-using System.Threading.Tasks;
+-using Mc2.CrudTest.Core.Domain.Entities.Events;
+-using MediatR;
+-using RabbitMQ.Client;
+-
+-namespace Mc2.CrudTest.Core.Application.Customer.Event;
+-  internal class CustomerCreatedEventHandler : INotificationHandler<CustomerCreatedEvent>
+-  {
+-    public CustomerCreatedEventHandler () { }
+-
+-    public async Task Handle (CustomerCreatedEvent notification, CancellationToken cancellationToken)
+-      {
+-        var customerEvent = notification.Customer;
+-        var factory = new ConnectionFactory () { HostName = "localhost" };
+-        factory.UserName = ConnectionFactory.DefaultUser;
+-        factory.Password = ConnectionFactory.DefaultPass;
+-        factory.VirtualHost = ConnectionFactory.DefaultVHost;
+-        factory.HostName = "hostName";
+-        factory.Port = AmqpTcpEndpoint.UseDefaultPort;
+-        factory.MaxMessageSize = 512 * 1024 * 1024;
+-        // Create a connection to RabbitMQ
+-        using ( var connection = factory.CreateConnection () )
+-        {
+-          // Create a channel
+-          using ( var channel = connection.CreateModel () )
+-          {
+-            // Declare a queue
+-            channel.QueueDeclare (queue: "CustomerCreatedEvent",
+-                                  durable: false,
+-                                  exclusive: false,
+-                                  autoDelete: false,
+-                                  arguments: null);
+-
+-            // Create a message
+-            string message = JsonSerializer.Serialize (customerEvent);
+-            var body = Encoding.UTF8.GetBytes (message);
+-
+-            // Publish the message to the queue
+-            channel.QueueDeclare(queue: "CustomerCreated",
+-                                 durable: true,
+-                                 exclusive: false,
+-                                 autoDelete: false,
+-                                 arguments: null);
+-            channel.BasicPublish (exchange: "Customer",
+-                                  routingKey: "Create",
+-                                  basicProperties: null,
+-                                  body: body);
+-          }
+-        }
+-        await Task.CompletedTask.ConfigureAwait (false);
+-        //throw new NotImplementedException();
+-      }
+-  }
+- 
+\ No newline at end of file
+diff --git a/Mc2.CrudTest.Core.Application/Customer/Query/GetCusomerById/GetCustomerQuery.cs b/Mc2.CrudTest.Core.Application/Customer/Query/GetCusomerById/GetCustomerQuery.cs
+index 3ee0dfb..e994974 100644
+--- a/Mc2.CrudTest.Core.Application/Customer/Query/GetCusomerById/GetCustomerQuery.cs
++++ b/Mc2.CrudTest.Core.Application/Customer/Query/GetCusomerById/GetCustomerQuery.cs
+@@ -1,4 +1,4 @@
+-﻿
++﻿using Mc2.CrudTest.Core.Application.Abstracation.DbContext;
+ using MediatR;
+ using System;
+ using System.Collections.Generic;
+@@ -8,31 +8,31 @@ using System.Threading.Tasks;
+ 
+ namespace Mc2.CrudTest.Core.Application.Customer.Query.GetCusomerById
+ {
+-    //public class GetCustomerQuery :  IRequest<CustomerViewModel?>
+-    //{
+-    //    public CustomerViewModel _Customer { get; set; } = default!;
+-    //    public class GetCustomerListQueryHandler : IRequestHandler<GetCustomerQuery, CustomerViewModel?>
+-    //    {
+-    //        public string FirstName { get; private set; }
+-    //        public string LastName { get; private set; }
+-    //        public string DateOfBirth { get; private set; }
+-    //        private readonly IApplicationReadDbFacade facade;
++    public class GetCustomerQuery :  IRequest<CustomerViewModel?>
++    {
++        public CustomerViewModel _Customer { get; set; } = default!;
++        public class GetCustomerListQueryHandler : IRequestHandler<GetCustomerQuery, CustomerViewModel?>
++        {
++            public string FirstName { get; private set; }
++            public string LastName { get; private set; }
++            public string DateOfBirth { get; private set; }
++            private readonly IApplicationReadDbFacade facade;
+ 
+-    //        public GetCustomerListQueryHandler(IApplicationReadDbFacade facade) => this.facade = facade ?? throw new ArgumentNullException(nameof(facade));
++            public GetCustomerListQueryHandler(IApplicationReadDbFacade facade) => this.facade = facade ?? throw new ArgumentNullException(nameof(facade));
+ 
+-    //        public async Task<CustomerViewModel?> Handle(GetCustomerQuery request, CancellationToken cancellationToken)
+-    //        {
+-    //            FirstName = request._Customer.FirstName;
+-    //            LastName = request._Customer.LastName;
+-    //            DateOfBirth=request._Customer.DateOfBirth;
++            public async Task<CustomerViewModel?> Handle(GetCustomerQuery request, CancellationToken cancellationToken)
++            {
++                FirstName = request._Customer.FirstName;
++                LastName = request._Customer.LastName;
++                DateOfBirth=request._Customer.DateOfBirth;
+ 
+-    //            // i liked create multiple entities for customer and BankAccount Even mobile then multiple domain then create aggregate for them then i using custome tsql query joining for better performance 
+-    //            var customer = await facade.QueryFirstOrDefaultAsync<CustomerViewModel?>(@"SELECT
+-    //                  *
+-    //              FROM [dbo].[Customers] c WITH(NOLOCK)
+-				//  where c.FirstName=@FirstName and c.LastName=@LastName and c.DateOfBirth = @DateOfBirth ", request, cancellationToken: cancellationToken);
+-    //            return customer;
+-    //        }
+-    //    }
+-    //}
++                // i liked create multiple entities for customer and BankAccount Even mobile then multiple domain then create aggregate for them then i using custome tsql query joining for better performance 
++                var customer = await facade.QueryFirstOrDefaultAsync<CustomerViewModel?>(@"SELECT
++                      *
++                  FROM [dbo].[Customers] c WITH(NOLOCK)
++				  where c.FirstName=@FirstName and c.LastName=@LastName and c.DateOfBirth = @DateOfBirth ", request, cancellationToken: cancellationToken);
++                return customer;
++            }
++        }
++    }
+ }
+diff --git a/Mc2.CrudTest.Core.Application/DependencyInjectionExtensions.cs b/Mc2.CrudTest.Core.Application/DependencyInjectionExtensions.cs
+index 0042534..efa3d7b 100644
+--- a/Mc2.CrudTest.Core.Application/DependencyInjectionExtensions.cs
++++ b/Mc2.CrudTest.Core.Application/DependencyInjectionExtensions.cs
+@@ -1,52 +1,51 @@
+ ﻿using FastExpressionCompiler;
+ using Mapster;
++using Mc2.CrudTest.Core.Application.Abstracation.Mapping;
+ using MediatR;
+ using Microsoft.Extensions.DependencyInjection;
+-using System.Reflection;
+-using AutoMapper;
+-using FluentValidation;
+-using Mc2.CrudTest.Core.Application.Abstracation.Behavior;
+-using Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
+-using Mc2.CrudTest.Core.Application.Customer.Command.CreateCustomer;
+-using Mc2.CrudTest.Core.Application.Customer.Event;
+-using Mc2.CrudTest.Core.Application.Mapper;
+-using Mc2.CrudTest.Core.Application.Services;
+-using Mc2.CrudTest.Core.Domain.Models;
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Text;
++using System.Threading.Tasks;
+ 
+ namespace Mc2.CrudTest.Core.Application
+ {
+     public static class DependencyInjectionExtensions
+     {
+-        /// <summary>
+-        /// Maybe you see anothers services that was not nessecary , inow , i am trying to create a bew pattern except inbound and ourbount ,
+-        /// I wabt to Use reflection to create every instance from any layyer i want....
+-        /// at the end i willl remove them ;
+-        /// </summary>
+-        /// <param name="services"></param>
+-        /// <returns></returns>
+-        public static IServiceCollection AddApplicationLayer(this IServiceCollection services)
++        public static IServiceCollection AddApplicationLayer(this IServiceCollection services, bool addValidation = false, bool addRequestLogging = false, bool useReadThroughCachingForQueries = false)
+         {
+-            var mapperConfig = new MapperConfiguration(cfg =>
++            services.Scan(scan =>
++                scan
++                .FromCallingAssembly()
++
++                .AddClasses(classes => classes.AssignableTo(typeof(IDbEntityToDomainEntityMapper<,>))).AsImplementedInterfaces().WithSingletonLifetime()
++                .AddClasses(classes => classes.AssignableTo(typeof(IDbEntityToValueObjectMapper<,>))).AsImplementedInterfaces().WithSingletonLifetime()
++
++                .AddClasses(classes => classes.AssignableTo(typeof(IViewModelToDbEntityMapper<,>))).AsImplementedInterfaces().WithSingletonLifetime()
++
++            );
++
++            if (addValidation)
+             {
+-                cfg.AddProfile<CustomerMap>();
+-            });
+-            //ServiceProvider? serviceProvider = services.BuildServiceProvider();
+-            //var scopeFactory = serviceProvider.GetRequiredService<IServiceScopeFactory>();
+-            //IMapper mapper = mapperConfig.CreateMapper();
+-            //services.AddSingleton(mapper);
+-            //var dbcontext = serviceProvider.GetService(typeof(IDbContext));
+-            services.AddScoped<IValidator<CreateCustomerCommand>, CreateUpdateCustomerValidator>();
+-            services.AddScoped<IValidateService, ValidataService>();
+-            services.AddScoped<ICustomerService, CustomerService>();
++              //  services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestValidationBehavior<,>));
++              //  best peractice is create pipeline for any request and validate and event storing there
++            }
++
++            if (addRequestLogging)
++            {
++               // services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestPerformanceBehavior<,>));
++            }
++
++            if (useReadThroughCachingForQueries)
++            {
++                //services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestCachingBehavior<,>));
++            }
++
++           
+ 
+             // Mapster
+             TypeAdapterConfig.GlobalSettings.Compiler = exp => exp.CompileFast();
+-            //using (var scope = scopeFactory.CreateScope())
+-            //{
+-            //    // Resolve services within the scope
+-            //    IDbContext? myScopedService = scope.ServiceProvider.GetRequiredService<IDbContext>();
+-            //    // Now you can use myScopedService...
+-            //}
+ 
+             return services;
+         }
+diff --git a/Mc2.CrudTest.Core.Application/Mapper/CustomerMap.cs b/Mc2.CrudTest.Core.Application/Mapper/CustomerMap.cs
+deleted file mode 100644
+index 1f905fc..0000000
+--- a/Mc2.CrudTest.Core.Application/Mapper/CustomerMap.cs
++++ /dev/null
+@@ -1,12 +0,0 @@
+-﻿using AutoMapper;
+-using Mc2.CrudTest.Core.Application.Customer;
+-
+-namespace Mc2.CrudTest.Core.Application.Mapper;
+-
+-public class CustomerMap : Profile
+-{
+-    public CustomerMap()
+-    {
+-        CreateMap<CustomerViewModel, Domain.Entities.Customer>();
+-    }
+-}
+\ No newline at end of file
+diff --git a/Mc2.CrudTest.Core.Application/Mc2.CrudTest.Core.Application.csproj b/Mc2.CrudTest.Core.Application/Mc2.CrudTest.Core.Application.csproj
+index 67e8b55..213893f 100644
+--- a/Mc2.CrudTest.Core.Application/Mc2.CrudTest.Core.Application.csproj
++++ b/Mc2.CrudTest.Core.Application/Mc2.CrudTest.Core.Application.csproj
+@@ -1,30 +1,26 @@
+ ﻿<Project Sdk="Microsoft.NET.Sdk">
+ 
+-    <PropertyGroup>
+-        <TargetFramework>net7.0</TargetFramework>
+-        <ImplicitUsings>enable</ImplicitUsings>
+-        <Nullable>enable</Nullable>
+-    </PropertyGroup>
++  <PropertyGroup>
++    <TargetFramework>net6.0</TargetFramework>
++    <ImplicitUsings>enable</ImplicitUsings>
++    <Nullable>enable</Nullable>
++  </PropertyGroup>
+ 
+-    <ItemGroup>
+-        <PackageReference Include="libphonenumber-csharp" Version="7.7.4" />
+-        <PackageReference Include="Ardalis.Specification" Version="8.0.0" />
+-        <PackageReference Include="AutoMapper" Version="13.0.1" />
+-        <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.11" />
+-        <PackageReference Include="ExpressionDebugger" Version="2.2.0" />
+-        <PackageReference Include="FastExpressionCompiler" Version="3.1.0" />
+-        <PackageReference Include="FluentValidation" Version="10.2.0" />
+-        <PackageReference Include="Mapster" Version="7.2.0" />
+-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="7.0.11" />
+-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.11" />
+-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.11" />
+-        <PackageReference Include="RabbitMQ.Client" Version="6.8.1" />
+-        <PackageReference Include="Scrutor" Version="3.3.0" />
+-    </ItemGroup>
++  <ItemGroup>
++    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.0" />
++      <PackageReference Include="ExpressionDebugger" Version="2.2.0" />
++    <PackageReference Include="FastExpressionCompiler" Version="3.1.0" />
++    <PackageReference Include="FluentValidation" Version="10.2.0" />
++    <PackageReference Include="Mapster" Version="7.2.0" />
++    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.0" />
++    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
++    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
++    <PackageReference Include="Scrutor" Version="3.3.0" />
++	  <PackageReference Include="MediatR" Version="12.1.1" />
++  </ItemGroup>
+ 
+-    <ItemGroup>
+-        <ProjectReference Include="..\Mc2.CrudTest.Core.Domain\Mc2.CrudTest.Core.Domain.csproj" />
+-    </ItemGroup>
++  <ItemGroup>
++    <ProjectReference Include="..\Mc2.CrudTest.Core.Domain\Mc2.CrudTest.Core.Domain.csproj" />
++  </ItemGroup>
+ 
+ </Project>
+diff --git a/Mc2.CrudTest.Core.Application/Models/AuditableDbEntity.cs b/Mc2.CrudTest.Core.Application/Models/AuditableDbEntity.cs
+new file mode 100644
+index 0000000..675c5f7
+--- /dev/null
++++ b/Mc2.CrudTest.Core.Application/Models/AuditableDbEntity.cs
+@@ -0,0 +1,19 @@
++﻿using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Text;
++using System.Threading.Tasks;
++
++namespace Mc2.CrudTest.Core.Application.Models
++{
++    public abstract class AuditableDbEntity : IDbEntity
++    {
++        public string CreatedBy { get; set; } = default!;
++
++        public DateTime CreatedUtc { get; set; }
++
++        public string? LastModifiedBy { get; set; }
++
++        public DateTime? LastModifiedUtc { get; set; }
++    }
++}
+diff --git a/Mc2.CrudTest.Core.Application/Models/IDbEntity.cs b/Mc2.CrudTest.Core.Application/Models/IDbEntity.cs
+new file mode 100644
+index 0000000..4c7a7c5
+--- /dev/null
++++ b/Mc2.CrudTest.Core.Application/Models/IDbEntity.cs
+@@ -0,0 +1,12 @@
++﻿using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Text;
++using System.Threading.Tasks;
++
++namespace Mc2.CrudTest.Core.Application.Models
++{
++    public interface IDbEntity
++    {
++    }
++}
+diff --git a/Mc2.CrudTest.Core.Application/Models/IViewModel.cs b/Mc2.CrudTest.Core.Application/Models/IViewModel.cs
+new file mode 100644
+index 0000000..d35ce69
+--- /dev/null
++++ b/Mc2.CrudTest.Core.Application/Models/IViewModel.cs
+@@ -0,0 +1,12 @@
++﻿using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Text;
++using System.Threading.Tasks;
++
++namespace Mc2.CrudTest.Core.Application.Models
++{
++    public interface IViewModel
++    {
++    }
++}
+diff --git a/Mc2.CrudTest.Core.Application/Models/ViewModel.cs b/Mc2.CrudTest.Core.Application/Models/ViewModel.cs
+deleted file mode 100644
+index c1dd302..0000000
+--- a/Mc2.CrudTest.Core.Application/Models/ViewModel.cs
++++ /dev/null
+@@ -1,9 +0,0 @@
+-﻿namespace Mc2.CrudTest.Core.Application.Models
+-{
+-
+-    public abstract class ViewModel
+-    {
+-        public Guid ViewModelId = Guid.NewGuid();
+-    }
+-
+-}
+\ No newline at end of file
+diff --git a/Mc2.CrudTest.Core.Application/ServiceLocatorPattern.cs b/Mc2.CrudTest.Core.Application/ServiceLocatorPattern.cs
+deleted file mode 100644
+index bb4b259..0000000
+--- a/Mc2.CrudTest.Core.Application/ServiceLocatorPattern.cs
++++ /dev/null
+@@ -1,30 +0,0 @@
+-﻿using System;
+-using System.Collections.Generic;
+-using System.Linq;
+-using System.Text;
+-using System.Threading.Tasks;
+-using Mc2.CrudTest.Core.Domain;
+-using Microsoft.Extensions.DependencyInjection;
+-
+-namespace Mc2.CrudTest.Core.Application
+-{
+-    ///
+-    ///that was for oue pattern creating 
+-    /// 
+-    //public static class ServiceLocatorPattern
+-    //{
+-    //    private static IServiceProvider _serviceProvider;
+-
+-    //    // Initialize the service provider
+-    //    public static void Initialize(IServiceProvider serviceProvider)
+-    //    {
+-    //        _serviceProvider = serviceProvider;
+-    //    }
+-
+-    //    // Resolve a service using the service provider
+-    //    public static T GetService<T>()
+-    //    {
+-    //        return _serviceProvider.GetRequiredService<T>();
+-    //    }
+-    //}
+-}
+diff --git a/Mc2.CrudTest.Core.Application/Services/ICustomerService.cs b/Mc2.CrudTest.Core.Application/Services/ICustomerService.cs
+deleted file mode 100644
+index 586f012..0000000
+--- a/Mc2.CrudTest.Core.Application/Services/ICustomerService.cs
++++ /dev/null
+@@ -1,54 +0,0 @@
+-﻿using Ardalis.Specification;
+-using Mc2.CrudTest.Core.Application.Spicipications;
+-using Mc2.CrudTest.Core.Domain.ValueObjects;
+-using Microsoft.AspNetCore.Http;
+-using Microsoft.EntityFrameworkCore;
+-using Microsoft.Extensions.Primitives;
+-
+-namespace Mc2.CrudTest.Core.Application.Services
+-{
+-    public interface ICustomerService
+-    {
+-        Task<string?> GetCommandType();
+-    }
+-    public class CustomerService : ICustomerService
+-    {
+-        private readonly IHttpContextAccessor _httpContextAccessor;
+-        public CustomerService(IHttpContextAccessor httpContextAccessor)
+-        {
+-            _httpContextAccessor = httpContextAccessor;
+-        }
+-        public Task<bool> IsEmailUniqueAsync(Email email)
+-        {
+-            //To do
+-            // later  CustomerService.Whwr(new CustomerSpecification(email));
+-            return Task.FromResult (true);
+-        }
+-        public async Task<string?> GetCommandType() //I would not using Jwt token because that not this tasks consince
+-        {                                       //simply geting CustomerUd from Headers, i know for secuire it should comes from token claims...
+-            if (_httpContextAccessor is null
+-                || _httpContextAccessor.HttpContext is null
+-                || _httpContextAccessor.HttpContext.Request is null)
+-                return null;
+-                StringValues customer = _httpContextAccessor.HttpContext.Request.Headers["RequestType"];
+-                try
+-            {
+-                string? res = null;
+-                foreach ( var s in customer )
+-                {
+-                    res = s;
+-                    break;
+-                }
+-                if ( res == null ) { }
+-                if ( res != null ) return await Task.FromResult (res).ConfigureAwait (false);
+-            }
+-            catch (Exception ex)
+-            {
+-                throw new Exception("Header error");
+-            }
+-
+-            return null;
+-        }
+-
+-    }
+-}
+\ No newline at end of file
+diff --git a/Mc2.CrudTest.Core.Application/Services/IValidateService.cs b/Mc2.CrudTest.Core.Application/Services/IValidateService.cs
+deleted file mode 100644
+index 882dc43..0000000
+--- a/Mc2.CrudTest.Core.Application/Services/IValidateService.cs
++++ /dev/null
+@@ -1,55 +0,0 @@
+-﻿using System.ComponentModel;
+-using Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
+-using Mc2.CrudTest.Core.Application.Customer;
+-using Microsoft.EntityFrameworkCore;
+-
+-namespace Mc2.CrudTest.Core.Application.Services;
+-
+-public interface IValidateService
+-{
+-    bool CheckCustomerExsistByFullName(string firstname , string lastname , string datteBitrh);
+-   bool CheckCustomerExsistByEmail(string email);
+-
+-}
+-
+-public class ValidataService : IValidateService
+-{
+-    private readonly IReadRepository<Domain.Entities.Customer> repository;
+-
+-    public ValidataService(IReadRepository<Domain.Entities.Customer> readRepository)
+-    {
+-        repository = readRepository;
+-    }
+-
+-
+-    public  bool CheckCustomerExsistByFullName(string firstname, string lastname, string datteBitrh )
+-    {
+-        var param = new { FirstName = firstname, LastName = lastname, DateOfBirth = datteBitrh };
+-        var customer =  repository.QueryFirstOrDefaultAsync<CustomerViewModel>(@"SELECT
+-                      *
+-                  FROM [dbo].[Customers] c WITH(NOLOCK)
+-				  where c.FirstName=@FirstName and c.LastName=@LastName and c.DateOfBirth = @DateOfBirth ", param );
+-      
+-        if (customer == null)
+-        {
+-            return false;
+-        }
+-        return true;
+-        
+-    }
+-
+-    public bool CheckCustomerExsistByEmail(string cuemail)
+-    {
+-        var param =new {Email =cuemail};
+-        var customer =  repository.QueryFirstOrDefaultAsync<CustomerViewModel>(@"SELECT
+-                      *
+-                  FROM [dbo].[Customers] c WITH(NOLOCK)
+-				  where c.Email=@Email ", param);
+-        if (customer == null) 
+-        {
+-            return false;
+-        }
+-        return true;
+-        
+-    }
+-}
+\ No newline at end of file
+diff --git a/Mc2.CrudTest.Core.Application/Spicipications/CustomerSpecification.cs b/Mc2.CrudTest.Core.Application/Spicipications/CustomerSpecification.cs
+deleted file mode 100644
+index fc4e394..0000000
+--- a/Mc2.CrudTest.Core.Application/Spicipications/CustomerSpecification.cs
++++ /dev/null
+@@ -1,24 +0,0 @@
+-﻿using System;
+-using System.Collections.Generic;
+-using System.Linq;
+-using System.Linq.Expressions;
+-using System.Text;
+-using System.Threading.Tasks;
+-using Ardalis.Specification;
+-using Mc2.CrudTest.Core.Domain.ValueObjects;
+-
+-namespace Mc2.CrudTest.Core.Application.Spicipications
+-{
+-    public sealed class CustomerSpecification : Specification<Domain.Entities.Customer>
+-    {
+-
+-        public CustomerSpecification(string Email)
+-        {
+-            Query.Where(c=>c.Email.Value==Email);
+-        }
+-        public CustomerSpecification(Guid Id)
+-        {
+-            Query.Where(w=>w.Id==Id);
+-        }
+-    }
+-}
+diff --git a/Mc2.CrudTest.Core.Domain/Abstracation/Events/IDomainEventHandler.cs b/Mc2.CrudTest.Core.Domain/Abstracation/Events/IDomainEventHandler.cs
+index 124adcd..1c9c1ed 100644
+--- a/Mc2.CrudTest.Core.Domain/Abstracation/Events/IDomainEventHandler.cs
++++ b/Mc2.CrudTest.Core.Domain/Abstracation/Events/IDomainEventHandler.cs
+@@ -1,6 +1,13 @@
+ ﻿using MediatR;
+-namespace Mc2.CrudTest.Core.Domain.Abstracation.Events;
+-public interface IDomainEventHandler<TEvent> : INotificationHandler<TEvent> where TEvent : IDomainEvent
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Text;
++using System.Threading.Tasks;
++
++namespace Mc2.CrudTest.Core.Domain.Abstracation.Events
+ {
+-    public Task PublishAsync<TEvent>(TEvent domainEvent);
+-}
+\ No newline at end of file
++    public interface IDomainEventHandler<TEvent> : INotificationHandler<TEvent> where TEvent : IDomainEvent
++    {
++    }
++}
+diff --git a/Mc2.CrudTest.Core.Domain/Abstracation/ICustomrtRepository.cs b/Mc2.CrudTest.Core.Domain/Abstracation/ICustomrtRepository.cs
+new file mode 100644
+index 0000000..9f3b1ef
+--- /dev/null
++++ b/Mc2.CrudTest.Core.Domain/Abstracation/ICustomrtRepository.cs
+@@ -0,0 +1,14 @@
++﻿using Mc2.CrudTest.Core.Domain.Entities;
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Text;
++using System.Threading.Tasks;
++
++namespace Mc2.CrudTest.Core.Domain.Abstracation
++{
++    public interface ICustomrtRepository
++    {
++        void insert(Customer customer);
++    }
++}
+diff --git a/Mc2.CrudTest.Core.Domain/Abstracation/Models/AuditableDbEntity.cs b/Mc2.CrudTest.Core.Domain/Abstracation/Models/AuditableDbEntity.cs
+deleted file mode 100644
+index b237352..0000000
+--- a/Mc2.CrudTest.Core.Domain/Abstracation/Models/AuditableDbEntity.cs
++++ /dev/null
+@@ -1,12 +0,0 @@
+-﻿namespace Mc2.CrudTest.Core.Domain.Abstracation.Models ;
+-
+-  public  interface AuditableDbEntity
+-  {
+-    public string CreatedBy { get; set; } 
+-
+-    public DateTime CreatedUtc { get; set; }
+-
+-    public string? LastModifiedBy { get; set; }
+-
+-    public DateTime? LastModifiedUtc { get; set; }
+-  }
+\ No newline at end of file
+diff --git a/Mc2.CrudTest.Core.Domain/Abstracation/Models/IAggregateRoot.cs b/Mc2.CrudTest.Core.Domain/Abstracation/Models/IAggregateRoot.cs
+deleted file mode 100644
+index 34e5610..0000000
+--- a/Mc2.CrudTest.Core.Domain/Abstracation/Models/IAggregateRoot.cs
++++ /dev/null
+@@ -1,6 +0,0 @@
+-﻿namespace Mc2.CrudTest.Core.Domain.Abstracation.Models;
+-
+-public interface IAggregateRoot
+-{
+-    
+-}
+\ No newline at end of file
+diff --git a/Mc2.CrudTest.Core.Domain/Abstracation/Models/IDomainEntity.cs b/Mc2.CrudTest.Core.Domain/Abstracation/Models/IDomainEntity.cs
+index 8e5436c..789cb97 100644
+--- a/Mc2.CrudTest.Core.Domain/Abstracation/Models/IDomainEntity.cs
++++ b/Mc2.CrudTest.Core.Domain/Abstracation/Models/IDomainEntity.cs
+@@ -6,7 +6,8 @@ using System.Threading.Tasks;
+ 
+ namespace Mc2.CrudTest.Core.Domain.Abstracation.Models
+ {
+-  public interface IDomainEntity{
+-  Guid Id { get; }
+-  }
+-}
+\ No newline at end of file
++    public interface IDomainEntity
++    {
++         int Id { get; }
++    }
++}
+diff --git a/Mc2.CrudTest.Core.Domain/Core/Exceptions/CustomNotResultException.cs b/Mc2.CrudTest.Core.Domain/Core/Exceptions/CustomNotResultException.cs
+deleted file mode 100644
+index 51cf153..0000000
+--- a/Mc2.CrudTest.Core.Domain/Core/Exceptions/CustomNotResultException.cs
++++ /dev/null
+@@ -1,45 +0,0 @@
+-﻿using System;
+-using System.Collections.Generic;
+-using System.Linq;
+-using System.Runtime.Serialization;
+-using System.Text;
+-using System.Threading.Tasks;
+-
+-namespace Mc2.CrudTest.Core.Domain.Core.Exceptions
+-{
+-    [Serializable]
+-    public sealed class CustomNotResultException : Exception
+-    {
+-        public NotResultTypeEnum Type { get; set; }
+-
+-        public CustomNotResultException(NotResultTypeEnum type)
+-        {
+-            Type = type;
+-        }
+-        protected CustomNotResultException(SerializationInfo info, StreamingContext context) : base(info, context)
+-        {
+-            if (info != null)
+-            {
+-                Type = (NotResultTypeEnum)info.GetValue("Type", typeof(NotResultTypeEnum));
+-            }
+-        }
+-        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+-        {
+-            base.GetObjectData(info, context);
+-
+-            // Add the custom property to the SerializationInfo object
+-            info.AddValue("Type", Type, typeof(NotResultTypeEnum));
+-        }
+-
+-    }
+-    public enum NotResultTypeEnum
+-    {
+-        Duplicated,
+-        NotExsistByFirstLastBirth,
+-        NotAnyCustomer,
+-        NotCustomerByEmail,
+-        NotExsist,
+-        InternalFail
+-
+-    }
+-}
+diff --git a/Mc2.CrudTest.Core.Domain/Core/Exceptions/CustomerValidateException.cs b/Mc2.CrudTest.Core.Domain/Core/Exceptions/CustomerValidateException.cs
+deleted file mode 100644
+index 3eee0d6..0000000
+--- a/Mc2.CrudTest.Core.Domain/Core/Exceptions/CustomerValidateException.cs
++++ /dev/null
+@@ -1,36 +0,0 @@
+-﻿using System.Runtime.Serialization;
+-using Mc2.CrudTest.Core.Domain.Core.Validations;
+-
+-namespace Mc2.CrudTest.Core.Domain.Core.Exceptions;
+-
+-[Serializable]
+-public sealed class CustomerValidateException : Exception   /// i now they must be abstract exeption class or generic class
+-                                                            /// and customer exceptions must be in use cases layer not here
+-                                                            /// and the exceptions in domain layer must throw standard exceptions
+-                                                            /// and check that in use cases (Appplication) layer and there trowing Generic Exceptions to exceptionHandlers midleware
+-                                                            /// but i think would not have time to doing thoese...im sorry
+-{
+-    private List<ValidationError> DataError{ get; set; }
+-
+-    public CustomerValidateException(List<ValidationError> errors)
+-    {
+-        DataError = errors;
+-    }
+-
+-    protected CustomerValidateException(SerializationInfo info, StreamingContext context) : base(info, context)
+-    {
+-        DataError = (List<ValidationError>)info.GetValue("DataError", typeof(List<ValidationError>));
+-    }
+-
+-    public List<ValidationError> GetErrors()
+-    {
+-        return DataError;
+-    }
+-    public override void GetObjectData(SerializationInfo info, StreamingContext context)
+-    {
+-        base.GetObjectData(info, context);
+-
+-        // Serialize the DataError list by adding it to the SerializationInfo object
+-        info.AddValue("DataError", DataError, typeof(List<ValidationError>));
+-    }
+-}
+\ No newline at end of file
+diff --git a/Mc2.CrudTest.Core.Domain/Core/Validations/ValidationError.cs b/Mc2.CrudTest.Core.Domain/Core/Validations/ValidationError.cs
+deleted file mode 100644
+index 75cc38f..0000000
+--- a/Mc2.CrudTest.Core.Domain/Core/Validations/ValidationError.cs
++++ /dev/null
+@@ -1,19 +0,0 @@
+-﻿using System;
+-using System.Collections.Generic;
+-using System.Linq;
+-using System.Text;
+-using System.Threading.Tasks;
+-
+-namespace Mc2.CrudTest.Core.Domain.Core.Validations
+-{
+-    public class ValidationError
+-    {
+-        public string PropertyName { get; set; }
+-        public string ErrorMessage { get; set; }
+-        public ValidationError(string propertyName, string errorMessage)
+-        {
+-            PropertyName = propertyName;
+-            ErrorMessage = errorMessage;
+-        }
+-    }
+-}
+diff --git a/Mc2.CrudTest.Core.Domain/DependencyInjectionExtensions.cs b/Mc2.CrudTest.Core.Domain/DependencyInjectionExtensions.cs
+index b74b1a8..82eed83 100644
+--- a/Mc2.CrudTest.Core.Domain/DependencyInjectionExtensions.cs
++++ b/Mc2.CrudTest.Core.Domain/DependencyInjectionExtensions.cs
+@@ -14,7 +14,6 @@ namespace Mc2.CrudTest.Core.Domain
+     {
+         public static IServiceCollection AddDomainLayer(this IServiceCollection services)
+         {
+-
+             services.AddSingleton<IDomainEventDispatcher, DomainEventDispatcher>();
+             return services;
+         }
+diff --git a/Mc2.CrudTest.Core.Domain/Entities/Customer.cs b/Mc2.CrudTest.Core.Domain/Entities/Customer.cs
+index 7f7a47e..7c1e961 100644
+--- a/Mc2.CrudTest.Core.Domain/Entities/Customer.cs
++++ b/Mc2.CrudTest.Core.Domain/Entities/Customer.cs
+@@ -2,71 +2,30 @@
+ using System;
+ using System.Collections.Generic;
+ using System.Linq;
+-using System.Security.Cryptography.X509Certificates;
+ using System.Text;
+ using System.Threading.Tasks;
+-using Mc2.CrudTest.Core.Domain.Abstracation.Models;
+-using Mc2.CrudTest.Core.Domain.Entities.Events;
+-using Mc2.CrudTest.Core.Domain.ValueObjects;
+ 
+-namespace Mc2.CrudTest.Core.Domain.Entities;
+-
+-public sealed class Customer : DomainEntity<Customer>, IAggregateRoot , AuditableDbEntity
++namespace Mc2.CrudTest.Core.Domain.Entities
+ {
+-    private Customer() : base()
+-    {
+-    }
+-
+-    public Customer _customer;
+-
+-
+-    public FirstName FirstName { get; private set; }
+-
+-    public LastName LastName { get; private set; }
+-
+-    public Email Email { get; private set; }
+-    public AccountNumber AccountNumber { get; private set; }
+-    public DateOfBirth DateOfBirth { get; private set; }
+-    public PhoneNumber PhoneNumber { get; private set; }
+-
+-    //public bool IsDeleted { get; }
+-    private Customer(FirstName firstName, LastName lastName, Email email, PhoneNumber phoneNumber,
+-        AccountNumber accountNumber, DateOfBirth dateOfBirth) : base(Guid.NewGuid())
+-    {
+-        FirstName = firstName;
+-        LastName = lastName;
+-        Email = email;
+-        AccountNumber = accountNumber;
+-        DateOfBirth = dateOfBirth;
+-        PhoneNumber = phoneNumber;
+-        _customer = this;
+-    }
+-
+-
+-    public static Customer Create(FirstName firstName, LastName lastName, Email email, PhoneNumber phoneNumber,
+-        AccountNumber accountNumber, DateOfBirth dateOfBirth)
+-    {
+-        var customer = new Customer(firstName, lastName, email, phoneNumber, accountNumber, dateOfBirth);
+-            customer.AddDomainEvent(new CustomerCreatedEvent(customer));
+-        return customer;
+-    }
+-    public static Customer Create(string firstName, string lastName, string email, string phoneNumber,
+-        string accountNumber, string dateOfBirth)
++    public sealed class Customer : DomainEntity
+     {
+-        var customer = new Customer(FirstName.Create(firstName), LastName.Create(lastName),
+-            Email.Create(email)
+-            , PhoneNumber.Create(ulong.Parse(phoneNumber))
+-            , AccountNumber.Create(accountNumber),
+-            DateOfBirth.Create(DateTime.Parse(dateOfBirth)));
+-        //Note!!!
+ 
+-        customer.AddDomainEvent(new CustomerCreatedEvent(customer));
+-        return customer;
+-        
++        public Customer(Guid Id ,string firstname, string lastname, DateTime dateOfBirth, ulong phoneNumber, string email, string bankAccountNumber)
++        {
++            Id = Id;
++            Firstname = firstname;
++            Lastname = lastname;
++            DateOfBirth = dateOfBirth;
++            PhoneNumber = phoneNumber;
++            Email = email;
++            BankAccountNumber = bankAccountNumber;
++        }
++
++        public string Firstname { get; private set; }
++        public string Lastname { get; private set; }
++        public DateTime DateOfBirth { get; private set; }
++        public ulong PhoneNumber { get; private set; }
++        public string Email { get; private set; }
++        public string BankAccountNumber { get; private set; }
+     }
+-
+-    public string CreatedBy { get; set; }
+-    public DateTime CreatedUtc { get; set; }
+-    public string? LastModifiedBy { get; set; }
+-    public DateTime? LastModifiedUtc { get; set; }
+-}
+\ No newline at end of file
++}
+diff --git a/Mc2.CrudTest.Core.Domain/Entities/Events/CustomerCreatedEvent.cs b/Mc2.CrudTest.Core.Domain/Entities/Events/CustomerCreatedEvent.cs
+deleted file mode 100644
+index f7c6c97..0000000
+--- a/Mc2.CrudTest.Core.Domain/Entities/Events/CustomerCreatedEvent.cs
++++ /dev/null
+@@ -1,14 +0,0 @@
+-﻿using Mc2.CrudTest.Core.Domain.Events;
+-
+-namespace Mc2.CrudTest.Core.Domain.Entities.Events
+-{
+-    public class CustomerCreatedEvent :DomainEvent
+-    {
+-        public Domain.Entities.Customer Customer { get;  }
+-
+-        public CustomerCreatedEvent(Domain.Entities.Customer customer)
+-        {
+-            Customer = customer ?? throw new ArgumentNullException(nameof(customer));
+-        }
+-    }
+-}
+diff --git a/Mc2.CrudTest.Core.Domain/Entities/Events/CustomerUpdatedEvent.cs b/Mc2.CrudTest.Core.Domain/Entities/Events/CustomerUpdatedEvent.cs
+deleted file mode 100644
+index b829bae..0000000
+--- a/Mc2.CrudTest.Core.Domain/Entities/Events/CustomerUpdatedEvent.cs
++++ /dev/null
+@@ -1,14 +0,0 @@
+-﻿using Mc2.CrudTest.Core.Domain.Events;
+-
+-namespace Mc2.CrudTest.Core.Domain.Entities.Events
+-{
+-    public  class CustomerUpdatedEvent :DomainEvent
+-    {
+-        public Domain.Entities.Customer Customer { get; }
+-
+-        public CustomerUpdatedEvent(Domain.Entities.Customer customer)
+-        {
+-            Customer = customer ?? throw new ArgumentNullException(nameof(customer));
+-        }
+-    }
+-}
+diff --git a/Mc2.CrudTest.Core.Domain/Mc2.CrudTest.Core.Domain.csproj b/Mc2.CrudTest.Core.Domain/Mc2.CrudTest.Core.Domain.csproj
+index 207b96d..fa4a357 100644
+--- a/Mc2.CrudTest.Core.Domain/Mc2.CrudTest.Core.Domain.csproj
++++ b/Mc2.CrudTest.Core.Domain/Mc2.CrudTest.Core.Domain.csproj
+@@ -1,7 +1,7 @@
+ ﻿<Project Sdk="Microsoft.NET.Sdk">
+ 
+   <PropertyGroup>
+-    <TargetFramework>net7.0</TargetFramework>
++    <TargetFramework>net6.0</TargetFramework>
+     <ImplicitUsings>enable</ImplicitUsings>
+     <Nullable>enable</Nullable>
+   </PropertyGroup>
+diff --git a/Mc2.CrudTest.Core.Domain/Models/DomainEntity.cs b/Mc2.CrudTest.Core.Domain/Models/DomainEntity.cs
+index 6dc8592..0e28cd6 100644
+--- a/Mc2.CrudTest.Core.Domain/Models/DomainEntity.cs
++++ b/Mc2.CrudTest.Core.Domain/Models/DomainEntity.cs
+@@ -10,15 +10,10 @@ using System.Threading.Tasks;
+ 
+ namespace Mc2.CrudTest.Core.Domain.Models
+ {
+-    public abstract class DomainEntity : IDomainEntity  
++    public abstract class DomainEntity : IDomainEntity
+     {
+-        public Guid Id { get; private init; }
+-        public DomainEntity(Guid Id)
+-        {
+-            this.Id = Id;
+-        }
+-
+-        private static IDomainEventDispatcher _dispatcher= new NullDomainEventDispatcher();
++        public int Id { get; set; }
++        private static IDomainEventDispatcher dispatcher = new NullDomainEventDispatcher();
+         private readonly List<IDomainEvent> domainEvents = new List<IDomainEvent>();
+         public IReadOnlyCollection<IDomainEvent> DomainEvents => domainEvents.AsReadOnly();
+         public void AddDomainEvent(IDomainEvent eventItem) => domainEvents.Add(eventItem);
+@@ -27,7 +22,7 @@ namespace Mc2.CrudTest.Core.Domain.Models
+         {
+             foreach (var domainEvent in domainEvents)
+             {
+-                await _dispatcher.PublishAsync(domainEvent);
++                await dispatcher.PublishAsync(domainEvent);
+             }
+             ClearDomainEvents();
+         }
+@@ -37,10 +32,9 @@ namespace Mc2.CrudTest.Core.Domain.Models
+         }
+ 
+         public override bool Equals(object? obj) => obj is DomainEntity entity && entity != null ? Equals(entity) : base.Equals(obj);
++        public override int GetHashCode() => Id;
+         public void RemoveDomainEvent(IDomainEvent eventItem) => domainEvents?.Remove(eventItem);
+-        public static void WireUpDispatcher(IDomainEventDispatcher dispatcher) =>DomainEntity._dispatcher = dispatcher;
++        internal static void WireUpDispatcher(IDomainEventDispatcher dispatcher) => DomainEntity.dispatcher = dispatcher;
+ 
+-        /// <inheritdoc />
+-        
+     }
+ }
+diff --git a/Mc2.CrudTest.Core.Domain/Models/DomainEntityT.cs b/Mc2.CrudTest.Core.Domain/Models/DomainEntityT.cs
+index a3fbecf..286310c 100644
+--- a/Mc2.CrudTest.Core.Domain/Models/DomainEntityT.cs
++++ b/Mc2.CrudTest.Core.Domain/Models/DomainEntityT.cs
+@@ -11,39 +11,25 @@ namespace Mc2.CrudTest.Core.Domain.Models
+ {
+     public abstract class DomainEntity<TEntity> : DomainEntity where TEntity : IDomainEntity
+     {
+-        public TEntity CloneWith(Action<TEntity> action)   // for the scenarios that we wants to with void deligate or func or Action
+-                                                           // combine one Aggregate to Another And Geting that ready for
+-                                                           // setuping Aggregate Root. not usseage in this scenario
++        public TEntity CloneWith(Action<TEntity> action)
+         {
+             var e = CreateShallowCopy();
+             action(e);
+             return e;
+         }
+-
+-
++        //reflection clon if need 
+         public virtual void ValidateAggregate()
+         {
+         }
+-        //reflection clon if need 
+         protected TEntity CreateShallowCopy() => (TEntity)MemberwiseClone();
+-
+         protected void ValidateNotNull(params DomainEntity[] domainEntities)
+         {
+-           
++            _ = domainEntities ?? throw new ArgumentNullException(nameof(domainEntities));
+             if (domainEntities.Any(e => e is null))
+             {
+                 throw new NullReferenceException($"One or more required child entities for aggregate of type '{typeof(TEntity).Name}' was null.");
+             }
+         }
+-
+-        /// <inheritdoc />
+-        protected DomainEntity(Guid Id) : base(Id)
+-        {
+-        }
+-
+-        protected DomainEntity() : base(Guid.NewGuid())
+-        {
+-        
+-        }
++       
+     }
+ }
+diff --git a/Mc2.CrudTest.Core.Domain/Models/Response.cs b/Mc2.CrudTest.Core.Domain/Models/Response.cs
+deleted file mode 100644
+index b2ed3cd..0000000
+--- a/Mc2.CrudTest.Core.Domain/Models/Response.cs
++++ /dev/null
+@@ -1,44 +0,0 @@
+-﻿namespace Mc2.CrudTest.Core.Domain.Models;
+-
+-public class Response
+-{
+-    private int StatusCode { get; }
+-    private string Message { get; }
+-    private bool IsSuccess { get; }
+-    private Response(int statusCode, string message, bool isSuccess)
+-    {
+-        StatusCode = statusCode;
+-        Message = message;
+-        IsSuccess = isSuccess;
+-    }
+-    public static Response Create(int statusCode, string message, bool isSuccess)
+-    {
+-        return new Response(statusCode, message, isSuccess);
+-    }
+-}
+-
+-public class Response<T>
+-{
+-    private int StatusCode { get; }
+-    private string Message { get; }
+-    private bool IsSuccess { get; }
+-
+-    public T? Data { get; set; }
+-
+-    private Response(T data, int statusCode, string message, bool isSuccess)
+-    {
+-        Data = data;
+-        StatusCode = statusCode;
+-        Message = message;
+-        IsSuccess = isSuccess;
+-    }
+-
+-    public static Response<T> Create(T data, int statusCode, string message, bool isSuccess)
+-    {
+-        return new Response<T>(data, statusCode, message, isSuccess);
+-    }
+-}
+-
+-
+-
+-
+diff --git a/Mc2.CrudTest.Core.Domain/Resources/Customer.cs b/Mc2.CrudTest.Core.Domain/Resources/Customer.cs
+new file mode 100644
+index 0000000..3af0ae0
+--- /dev/null
++++ b/Mc2.CrudTest.Core.Domain/Resources/Customer.cs
+@@ -0,0 +1,27 @@
++﻿using Mc2.CrudTest.Core.Domain.Models;
++using Mc2.CrudTest.Core.Domain.ValueObjects;
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Text;
++using System.Threading.Tasks;
++
++namespace Mc2.CrudTest.Core.Domain.Resources
++{
++    public class Customer : DomainEntity<Customer>
++    {
++        public FirstName Firstname { get; init; }
++        public LastName Lastname { get; init; }
++        public DateTime DateOfBirth { get; init  ; }
++        public ulong PhoneNumber { get; init  ; }  // it should better if i create mobile number value object but in the readme tolds using nvarchar or ulong
++        public string Email { get; init  ; }
++        public string BankAccountNumber { get; init  ; }
++        public void CreateCustomerEvent() => AddDomainEvent(new CustomerCreatedEvent(this));
++        public void UpdateCustomerEvent() => AddDomainEvent(new CustomerUpdatedEvent(this));
++        public override void ValidateAggregate()
++        {
++            //validate mobile number by external lib in upper layer
++            //throw exeption if not valid
++        }
++    }
++}
+diff --git a/Mc2.CrudTest.Core.Domain/Resources/CustomerCreatedEvent.cs b/Mc2.CrudTest.Core.Domain/Resources/CustomerCreatedEvent.cs
+new file mode 100644
+index 0000000..a28bb24
+--- /dev/null
++++ b/Mc2.CrudTest.Core.Domain/Resources/CustomerCreatedEvent.cs
+@@ -0,0 +1,19 @@
++﻿using Mc2.CrudTest.Core.Domain.Events;
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Text;
++using System.Threading.Tasks;
++
++namespace Mc2.CrudTest.Core.Domain.Resources
++{
++    public class CustomerCreatedEvent :DomainEvent
++    {
++        public Customer Customer { get;  }
++
++        public CustomerCreatedEvent(Customer customer)
++        {
++            Customer = customer ?? throw new ArgumentNullException(nameof(customer));
++        }
++    }
++}
+diff --git a/Mc2.CrudTest.Core.Domain/Resources/CustomerUpdatedEvent.cs b/Mc2.CrudTest.Core.Domain/Resources/CustomerUpdatedEvent.cs
+new file mode 100644
+index 0000000..a0ba565
+--- /dev/null
++++ b/Mc2.CrudTest.Core.Domain/Resources/CustomerUpdatedEvent.cs
+@@ -0,0 +1,19 @@
++﻿using Mc2.CrudTest.Core.Domain.Events;
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Text;
++using System.Threading.Tasks;
++
++namespace Mc2.CrudTest.Core.Domain.Resources
++{
++    public  class CustomerUpdatedEvent :DomainEvent
++    {
++        public Customer Customer { get; }
++
++        public CustomerUpdatedEvent(Customer customer)
++        {
++            Customer = customer ?? throw new ArgumentNullException(nameof(customer));
++        }
++    }
++}
+diff --git a/Mc2.CrudTest.Core.Domain/ValueObjects/AccountNumber.cs b/Mc2.CrudTest.Core.Domain/ValueObjects/AccountNumber.cs
+deleted file mode 100644
+index 946e1f2..0000000
+--- a/Mc2.CrudTest.Core.Domain/ValueObjects/AccountNumber.cs
++++ /dev/null
+@@ -1,32 +0,0 @@
+-﻿using System;
+-using System.Collections.Generic;
+-using System.Linq;
+-using System.Text;
+-using System.Threading.Tasks;
+-using Mc2.CrudTest.Core.Domain.Abstracation.Models;
+-
+-namespace Mc2.CrudTest.Core.Domain.ValueObjects
+-{
+-    public sealed class AccountNumber : ValueObject
+-
+-    {
+-        private AccountNumber(string value) => Value = value;
+-        public string Value { get; }
+-        public static implicit operator string(AccountNumber accountNumber) => accountNumber.Value;
+-        public static AccountNumber Create(string accountNumber)
+-        {
+-            CheckValueObject(accountNumber);
+-            return new AccountNumber(accountNumber);
+-        }
+-
+-        private static void CheckValueObject(string accountNumber)
+-        {
+-            // that will be validating in front end before Submiting form By accourding a task
+-        }
+-
+-        public override IEnumerable<object> GetAtomicValues()
+-        {
+-            yield return Value;
+-        }
+-    }
+-}
+diff --git a/Mc2.CrudTest.Core.Domain/ValueObjects/DateOfBirth.cs b/Mc2.CrudTest.Core.Domain/ValueObjects/DateOfBirth.cs
+deleted file mode 100644
+index b279c59..0000000
+--- a/Mc2.CrudTest.Core.Domain/ValueObjects/DateOfBirth.cs
++++ /dev/null
+@@ -1,48 +0,0 @@
+-﻿using System;
+-using System.Collections.Generic;
+-using System.Linq;
+-using System.Text;
+-using System.Threading.Tasks;
+-using Mc2.CrudTest.Core.Domain.Abstracation.Models;
+-
+-namespace Mc2.CrudTest.Core.Domain.ValueObjects
+-{
+-    public sealed class DateOfBirth : ValueObject
+-    {
+-        public string Value { get; }
+-
+-        protected DateOfBirth(DateTime dateOfBirth)
+-        {
+-            // Validate that the date of birth is within an acceptable range (e.g., 100 years ago from today)
+-            CheckValueObject(dateOfBirth);
+-
+-            Value = dateOfBirth.ToShortDateString();
+-        }
+-
+-        protected DateOfBirth()
+-        {
+-
+-        }
+-
+-        private static void CheckValueObject(DateTime dateOfBirth)
+-        {
+-            DateTime minDateOfBirth = DateTime.Today.AddYears(-100);
+-            DateTime maxDateOfBirth = DateTime.Today.AddYears(-16);
+-
+-            if (dateOfBirth < minDateOfBirth || dateOfBirth > maxDateOfBirth)
+-            {
+-                throw new ArgumentOutOfRangeException(nameof(dateOfBirth), "Date of birth must be within the last 90 years.");
+-            }
+-        }
+-
+-        public static DateOfBirth Create(DateTime BirthDate)
+-        {
+-            return new DateOfBirth(BirthDate);
+-        }
+-        public override IEnumerable<object> GetAtomicValues()
+-        {
+-            throw new NotImplementedException();
+-        }
+-        public static implicit operator string(DateOfBirth DateOfBirth) => DateOfBirth.Value;
+-    }
+-}
+diff --git a/Mc2.CrudTest.Core.Domain/ValueObjects/Email.cs b/Mc2.CrudTest.Core.Domain/ValueObjects/Email.cs
+deleted file mode 100644
+index 2e6a328..0000000
+--- a/Mc2.CrudTest.Core.Domain/ValueObjects/Email.cs
++++ /dev/null
+@@ -1,42 +0,0 @@
+-﻿using System;
+-using System.Collections.Generic;
+-using System.Linq;
+-using System.Text;
+-using System.Text.RegularExpressions;
+-using System.Threading.Tasks;
+-using Mc2.CrudTest.Core.Domain.Abstracation.Models;
+-
+-namespace Mc2.CrudTest.Core.Domain.ValueObjects
+-{
+-    public sealed class Email : ValueObject
+-    {
+-        public const int MaxLength = 256;
+-
+-        private const string EmailRegexPattern = @"^(?!\.)(""([^""\r\\]|\\[""\r\\])*""|([-a-z0-9!#$%&'*+/=?^_`{|}~]|(?<!\.)\.)*)(?<!\.)@[a-z0-9][\w\.-]*[a-z0-9]\.[a-z][a-z\.]*[a-z]$";
+-        private static readonly Lazy<Regex> EmailFormatRegex =
+-            new Lazy<Regex>(() => new Regex(EmailRegexPattern, RegexOptions.Compiled | RegexOptions.IgnoreCase));
+-        private Email(string value) => Value = value;
+-        public string Value { get; }
+-
+-        public static implicit operator string(Email email) => email.Value;
+-
+-        public static Email Create(string email)
+-        {
+-            CheckValueObject(email);
+-            return new Email(email);
+-        }
+-
+-        public override IEnumerable<object> GetAtomicValues()
+-        {
+-            yield return Value;
+-        }
+-
+-        private static void CheckValueObject(string email)
+-        {
+-            if (string.IsNullOrWhiteSpace(email)) throw new Exception("");
+-            if (email.Length > MaxLength) throw new Exception();
+-            if (!EmailFormatRegex.Value.IsMatch(email)) throw new Exception();
+-
+-        }
+-    }
+-}
+diff --git a/Mc2.CrudTest.Core.Domain/ValueObjects/FirstName.cs b/Mc2.CrudTest.Core.Domain/ValueObjects/FirstName.cs
+index e39d580..d17386f 100644
+--- a/Mc2.CrudTest.Core.Domain/ValueObjects/FirstName.cs
++++ b/Mc2.CrudTest.Core.Domain/ValueObjects/FirstName.cs
+@@ -10,8 +10,8 @@ namespace Mc2.CrudTest.Core.Domain.ValueObjects
+     public sealed class FirstName : ValueObject
+     {
+         public const int MaxLenght = 50;
+-        public string Value { get; set; }
+-        public static implicit operator string(FirstName firstName) => firstName.Value;
++        public string Value { get; }
++
+ 
+         public override IEnumerable<object> GetAtomicValues()
+         {
+diff --git a/Mc2.CrudTest.Core.Domain/ValueObjects/LastName.cs b/Mc2.CrudTest.Core.Domain/ValueObjects/LastName.cs
+index be36f75..6b38d7f 100644
+--- a/Mc2.CrudTest.Core.Domain/ValueObjects/LastName.cs
++++ b/Mc2.CrudTest.Core.Domain/ValueObjects/LastName.cs
+@@ -10,9 +10,9 @@ namespace Mc2.CrudTest.Core.Domain.ValueObjects
+     public sealed class LastName : ValueObject
+     {
+         public const int MaxLenght = 50;
+-        public string Value { get; set; }
++        public string Value { get; }
++
+ 
+-        public static implicit operator string(LastName lastName) => lastName.Value!;
+         public override IEnumerable<object> GetAtomicValues()
+         {
+             yield return Value;
+diff --git a/Mc2.CrudTest.Core.Domain/ValueObjects/PhoneNumber.cs b/Mc2.CrudTest.Core.Domain/ValueObjects/PhoneNumber.cs
+deleted file mode 100644
+index be398d3..0000000
+--- a/Mc2.CrudTest.Core.Domain/ValueObjects/PhoneNumber.cs
++++ /dev/null
+@@ -1,36 +0,0 @@
+-﻿using System;
+-using System.Collections.Generic;
+-using System.Linq;
+-using System.Text;
+-using System.Threading.Tasks;
+-using Mc2.CrudTest.Core.Domain.Abstracation.Models;
+-
+-namespace Mc2.CrudTest.Core.Domain.ValueObjects
+-{
+-    public sealed class PhoneNumber : ValueObject
+-    {
+-        public const int MaxLength = 14;
+-        private PhoneNumber(ulong value) => Value = value;
+-        public ulong Value { get; }
+-
+-        public static PhoneNumber Create(ulong phonenimber)
+-        {
+-            CheckValueObject(phonenimber);
+-            return new PhoneNumber(phonenimber);
+-        }
+-
+-        private static void CheckValueObject(ulong phonenimber)
+-        {
+-            //  Being Uniqe is Checked in Application Layer because of IO bounding need and Extra Library must be in infrastructure
+-            // maybe somebody tolds you could Check uinqing that in event List in Customers Aggregate but that wasnt correct way because maybe some other 
+-            //web services Adding this Entity ! (By  Condition this id Base Entity and Used in Any Aggregate root)
+-            //or maybe i create some customer that is in event  store first, and after savechanges they will be clears and after that there isnt state of created customer befor in Aggregate Events...
+-
+-        }
+-        public static implicit operator ulong(PhoneNumber phoneNumber) => phoneNumber.Value;
+-        public override IEnumerable<object> GetAtomicValues()
+-        {
+-            yield return Value;
+-        }
+-    }
+-}
+diff --git a/Mc2.CrudTest.Presentation/Server/Controllers/CustomerController.cs b/Mc2.CrudTest.Presentation/Server/Controllers/CustomerController.cs
+index c5bcf57..25eca62 100644
+--- a/Mc2.CrudTest.Presentation/Server/Controllers/CustomerController.cs
++++ b/Mc2.CrudTest.Presentation/Server/Controllers/CustomerController.cs
+@@ -1,5 +1,7 @@
+ ﻿using Mc2.CrudTest.Core.Application.Customer;
+ using Mc2.CrudTest.Core.Application.Customer.Command.CreateCustomer;
++using Mc2.CrudTest.Core.Application.Customer.Command.DeleteCustomer;
++using Mc2.CrudTest.Core.Application.Customer.Query.GetCusomerById;
+ using MediatR;
+ using Microsoft.AspNetCore.Http;
+ using Microsoft.AspNetCore.Mvc;
+@@ -10,21 +12,17 @@ namespace Mc2.CrudTest.Presentation.Server.Controllers
+     [ApiController]
+     public class CustomerController : ControllerBase
+     {
+-        public CustomerController(IMediator mediator)
+-        {
+-            this.mediator = mediator;
+-        }
+         private readonly IMediator mediator;
+         [HttpPost("[action]")]
+         public async Task<ActionResult<CustomerViewModel>> AddOrUpdateCustomer([FromBody] CustomerViewModel customer)
+         {
+-            return Ok(await mediator.Send(new CreateCustomerCommand { Customer = customer }));
++            return Ok(await mediator.Send(new AddOrUpdateCustomerCommand { Customer = customer }));
+         }
+-        //[HttpGet("[action]")]
+-        //public async Task<ActionResult<CustomerViewModel>> GetCustomer([FromBody] CustomerViewModel customer) => Ok(await mediator.Send(new GetCustomerQuery() { _Customer=customer  }));
++        [HttpGet("[action]")]
++        public async Task<ActionResult<CustomerViewModel>> GetCustomer([FromBody] CustomerViewModel customer) => Ok(await mediator.Send(new GetCustomerQuery() { _Customer=customer  }));
+ 
+-        //[HttpGet("[action]")]
+-        //public async Task<ActionResult<CustomerViewModel>> DeleteCustomer([FromBody] CustomerViewModel customer) => Ok(await mediator.Send(new DeleteCustomerCommand() { Customer= customer }));
++        [HttpGet("[action]")]
++        public async Task<ActionResult<CustomerViewModel>> DeleteCustomer([FromBody] CustomerViewModel customer) => Ok(await mediator.Send(new DeleteCustomerCommand() { Customer= customer }));
+ 
+     }
+ }
+diff --git a/Mc2.CrudTest.Presentation/Server/Mc2.CrudTest.Presentation.Server.csproj b/Mc2.CrudTest.Presentation/Server/Mc2.CrudTest.Presentation.Server.csproj
+index 9cc9f17..b3669a6 100644
+--- a/Mc2.CrudTest.Presentation/Server/Mc2.CrudTest.Presentation.Server.csproj
++++ b/Mc2.CrudTest.Presentation/Server/Mc2.CrudTest.Presentation.Server.csproj
+@@ -1,7 +1,7 @@
+-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
++<Project Sdk="Microsoft.NET.Sdk.Web">
+ 
+   <PropertyGroup>
+-    <TargetFramework>net7.0</TargetFramework>
++    <TargetFramework>net6.0</TargetFramework>
+     <Nullable>enable</Nullable>
+     <ImplicitUsings>enable</ImplicitUsings>
+   </PropertyGroup>
+@@ -9,12 +9,7 @@
+   <ItemGroup>
+     <PackageReference Include="MediatR" Version="12.1.1" />
+     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="6.0.0" />
+-    <PackageReference Include="RabbitMQ.Client" Version="6.8.1" />
+     <PackageReference Include="Swagger" Version="1.0.0" />
+-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.11">
+-	    <PrivateAssets>all</PrivateAssets>
+-	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+-    </PackageReference>
+   </ItemGroup>
+ 
+   <ItemGroup>
+diff --git a/Mc2.CrudTest.Presentation/Server/Program.cs b/Mc2.CrudTest.Presentation/Server/Program.cs
+index acfcc98..b590686 100644
+--- a/Mc2.CrudTest.Presentation/Server/Program.cs
++++ b/Mc2.CrudTest.Presentation/Server/Program.cs
+@@ -1,12 +1,10 @@
+-
+-using Mc2.Crud.Persistanse.DbContext;
++using Mc2.Crud.Persistanse.DbContexts;
+ using Mc2.CrudTest.Core.Application;
+-using Mc2.CrudTest.Core.Application.Abstracation.NewRepositoryPattern;
++using Mc2.CrudTest.Core.Application.Abstracation.DbContext;
+ using Mc2.CrudTest.Core.Domain;
+-using Mc2.CrudTest.Persistanse;
+-using Mc2.CrudTest.Presentation.Server.midlewares;
++using Microsoft.AspNetCore.ResponseCompression;
+ using Microsoft.EntityFrameworkCore;
+-using Microsoft.Extensions.DependencyInjection.Extensions;
++using Microsoft.Extensions.DependencyInjection;
+ 
+ namespace Mc2.CrudTest.Presentation
+ {
+@@ -15,25 +13,43 @@ namespace Mc2.CrudTest.Presentation
+         public static void Main(string[] args)
+         {
+             var builder = WebApplication.CreateBuilder(args);
+-           builder.Services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+-            // Add services to the container.
+-            //builder.Services.AddDbContext<MyAppContext>(options =>
+-            //    options
+-            //        .UseSqlServer("Server =.; DataBase = Local; UID = app; PWD = app; Trusted_Connection = True; TrustServerCertificate = True") //ConnectionString
+ 
+-            //);
++            // Add services to the container.
++            builder.Services.AddMediatR(new MediatRServiceConfiguration() {
++            //MediatR Config
++            });
+             builder.Services.AddDomainLayer();
+-            builder.Services.AddScoped<IDbContext, MyAppContext>();
+-            builder.Services.AddScoped<IWriteCustomerRepository>(provider => provider.GetService<WriteCustomerRepository>() ?? throw new Exception("Could not get DB context."));
+-            //builder.Services.AddAutoMapper(typeof(Program));
+-    
+             builder.Services.AddApplicationLayer();
+-            builder.Services.AddPersistenceLayer();
+-  
++            builder.Services.AddDbContext<ApplicationWriteDbContext>(options =>
++                    options
++                    .UseSqlServer("DataBase=. ......................") //ConnectionString
++                    .EnableSensitiveDataLogging(true)
++                );
++            builder. Services.AddScoped<IApplicationWriteDbContext>(provider => provider.GetService<ApplicationWriteDbContext>() ?? throw new Exception("Could not get DB context."));
++            builder. Services.AddScoped<IApplicationReadDbFacade, ApplicationReadDbFacade>();
+             builder.Services.AddControllersWithViews();
++            builder.Services.AddRazorPages();
+ 
+             var app = builder.Build();
+-            app.UseExceptionHandleMiddleware();
++            using (var scope = app.Services.CreateScope())
++            {
++                var serviceProvider = scope.ServiceProvider;
++
++                // Perform additional initialization of the domain layer.
++                serviceProvider.WireUpDomainEventHandlers();
++
++                try
++                {
++
++                    var applicationDbContext = serviceProvider.GetRequiredService<ApplicationWriteDbContext>();
++                    applicationDbContext.Database.Migrate();
++                }
++                catch (Exception ex)
++                {
++                    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
++                    logger.LogError(ex, "An error occurred while migrating or initializing the database.");
++                }
++            }
+             // Configure the HTTP request pipeline.
+             if (app.Environment.IsDevelopment())
+             {
+@@ -52,14 +68,13 @@ namespace Mc2.CrudTest.Presentation
+             app.UseStaticFiles();
+ 
+             app.UseRouting();
++            
++
++            app.MapRazorPages();
+             app.MapControllers();
+             app.MapFallbackToFile("index.html");
+-      
++
+             app.Run();
+         }
+-
+-
+-
+-
+-}
++    }
+ }
+\ No newline at end of file
+diff --git a/Mc2.CrudTest.Presentation/Server/midlewares/ExceptionHandleMiddleware.cs b/Mc2.CrudTest.Presentation/Server/midlewares/ExceptionHandleMiddleware.cs
+deleted file mode 100644
+index e3b798f..0000000
+--- a/Mc2.CrudTest.Presentation/Server/midlewares/ExceptionHandleMiddleware.cs
++++ /dev/null
+@@ -1,64 +0,0 @@
+-﻿using Mc2.CrudTest.Core.Domain.Core.Exceptions;
+-using Mc2.CrudTest.Core.Domain.Core.Validations;
+-using Mc2.CrudTest.Core.Domain.Models;
+-
+-namespace Mc2.CrudTest.Presentation.Server.midlewares
+-{
+-    public class ExceptionHandleMiddleware
+-    {
+-        private readonly RequestDelegate _next;
+-
+-        public ExceptionHandleMiddleware(RequestDelegate next)
+-        {
+-            _next = next;
+-        }
+-
+-        public async Task Invoke(HttpContext httpContext)
+-        {
+-            try
+-            {
+-                await _next(httpContext);
+-            }
+-            catch (Exception ex)
+-            {
+-                await HandleException(ex, httpContext);
+-            }
+-        }
+-
+-        private async Task HandleException(Exception ex, HttpContext httpContext)
+-        {
+-            if (ex is InvalidOperationException)
+-            {
+-                httpContext.Response.StatusCode = 400; //HTTP status code
+-                //httpContext.Response.WriteAsync("Invalid operation");
+-                //httpContext.Response.WriteAsync("Invalid operation");             
+-                await httpContext.Response.WriteAsJsonAsync(
+-                    Response.Create(statusCode: 400, message: "Invalid operation", isSuccess: false)
+-                );
+-            }
+-            else if (ex is ArgumentException)
+-            {
+-                await httpContext.Response.WriteAsync("Invalid argument");
+-            }
+-            else if (ex is CustomerValidateException)
+-            {
+-                List<ValidationError> dataError = ((CustomerValidateException)ex).GetErrors();
+-                await httpContext.Response.WriteAsJsonAsync(
+-                    Response<List<ValidationError>>.Create(dataError, 500, "Validate error", false));
+-            }
+-            else
+-            {
+-                await httpContext.Response.WriteAsync("Unknown error");
+-            }
+-        }
+-    }
+-
+-
+-    public static class ExceptionHandleMiddlewareExtensions
+-    {
+-        public static IApplicationBuilder UseExceptionHandleMiddleware(this IApplicationBuilder builder)
+-        {
+-            return builder.UseMiddleware<ExceptionHandleMiddleware>();
+-        }
+-    }
+-}
+\ No newline at end of file
+diff --git a/Mc2.CrudTest.sln b/Mc2.CrudTest.sln
+new file mode 100644
+index 0000000..18aac78
+--- /dev/null
++++ b/Mc2.CrudTest.sln
+@@ -0,0 +1,61 @@
++﻿
++Microsoft Visual Studio Solution File, Format Version 12.00
++# Visual Studio Version 17
++VisualStudioVersion = 17.4.33213.308
++MinimumVisualStudioVersion = 10.0.40219.1
++Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mc2.CrudTest.Presentation.Server", "Mc2.CrudTest.Presentation\Server\Mc2.CrudTest.Presentation.Server.csproj", "{D2AD2F7D-C1E0-4C84-A2A4-6900CED15599}"
++EndProject
++Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mc2.CrudTest.Presentation.Client", "Mc2.CrudTest.Presentation\Client\Mc2.CrudTest.Presentation.Client.csproj", "{817C1B83-0CAC-4345-A0BE-5CCF30B15C26}"
++EndProject
++Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mc2.CrudTest.Presentation.Shared", "Mc2.CrudTest.Presentation\Shared\Mc2.CrudTest.Presentation.Shared.csproj", "{D6F1EC1A-CE1D-4E6D-B61D-07033DD442BE}"
++EndProject
++Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mc2.CrudTest.AcceptanceTests", "Mc2.CrudTest.AcceptanceTests\Mc2.CrudTest.AcceptanceTests.csproj", "{6776DF76-1054-486C-A79A-57100C47032F}"
++EndProject
++Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mc2.CrudTest.Core.Domain", "Mc2.CrudTest.Core.Domain\Mc2.CrudTest.Core.Domain.csproj", "{FB841FAD-76B0-494D-9119-392ACE7CAE38}"
++EndProject
++Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mc2.CrudTest.Core.Application", "Mc2.CrudTest.Core.Application\Mc2.CrudTest.Core.Application.csproj", "{CE3F5F8F-5760-4BB0-A441-0D82D208815E}"
++EndProject
++Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mc2.Crud.Persistanse", "Mc2.Crud.Persistanse\Mc2.Crud.Persistanse.csproj", "{70E2BF54-3C98-4960-99B4-85D0988EDAA9}"
++EndProject
++Global
++	GlobalSection(SolutionConfigurationPlatforms) = preSolution
++		Debug|Any CPU = Debug|Any CPU
++		Release|Any CPU = Release|Any CPU
++	EndGlobalSection
++	GlobalSection(ProjectConfigurationPlatforms) = postSolution
++		{D2AD2F7D-C1E0-4C84-A2A4-6900CED15599}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
++		{D2AD2F7D-C1E0-4C84-A2A4-6900CED15599}.Debug|Any CPU.Build.0 = Debug|Any CPU
++		{D2AD2F7D-C1E0-4C84-A2A4-6900CED15599}.Release|Any CPU.ActiveCfg = Release|Any CPU
++		{D2AD2F7D-C1E0-4C84-A2A4-6900CED15599}.Release|Any CPU.Build.0 = Release|Any CPU
++		{817C1B83-0CAC-4345-A0BE-5CCF30B15C26}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
++		{817C1B83-0CAC-4345-A0BE-5CCF30B15C26}.Debug|Any CPU.Build.0 = Debug|Any CPU
++		{817C1B83-0CAC-4345-A0BE-5CCF30B15C26}.Release|Any CPU.ActiveCfg = Release|Any CPU
++		{817C1B83-0CAC-4345-A0BE-5CCF30B15C26}.Release|Any CPU.Build.0 = Release|Any CPU
++		{D6F1EC1A-CE1D-4E6D-B61D-07033DD442BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
++		{D6F1EC1A-CE1D-4E6D-B61D-07033DD442BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
++		{D6F1EC1A-CE1D-4E6D-B61D-07033DD442BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
++		{D6F1EC1A-CE1D-4E6D-B61D-07033DD442BE}.Release|Any CPU.Build.0 = Release|Any CPU
++		{6776DF76-1054-486C-A79A-57100C47032F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
++		{6776DF76-1054-486C-A79A-57100C47032F}.Debug|Any CPU.Build.0 = Debug|Any CPU
++		{6776DF76-1054-486C-A79A-57100C47032F}.Release|Any CPU.ActiveCfg = Release|Any CPU
++		{6776DF76-1054-486C-A79A-57100C47032F}.Release|Any CPU.Build.0 = Release|Any CPU
++		{FB841FAD-76B0-494D-9119-392ACE7CAE38}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
++		{FB841FAD-76B0-494D-9119-392ACE7CAE38}.Debug|Any CPU.Build.0 = Debug|Any CPU
++		{FB841FAD-76B0-494D-9119-392ACE7CAE38}.Release|Any CPU.ActiveCfg = Release|Any CPU
++		{FB841FAD-76B0-494D-9119-392ACE7CAE38}.Release|Any CPU.Build.0 = Release|Any CPU
++		{CE3F5F8F-5760-4BB0-A441-0D82D208815E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
++		{CE3F5F8F-5760-4BB0-A441-0D82D208815E}.Debug|Any CPU.Build.0 = Debug|Any CPU
++		{CE3F5F8F-5760-4BB0-A441-0D82D208815E}.Release|Any CPU.ActiveCfg = Release|Any CPU
++		{CE3F5F8F-5760-4BB0-A441-0D82D208815E}.Release|Any CPU.Build.0 = Release|Any CPU
++		{70E2BF54-3C98-4960-99B4-85D0988EDAA9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
++		{70E2BF54-3C98-4960-99B4-85D0988EDAA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
++		{70E2BF54-3C98-4960-99B4-85D0988EDAA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
++		{70E2BF54-3C98-4960-99B4-85D0988EDAA9}.Release|Any CPU.Build.0 = Release|Any CPU
++	EndGlobalSection
++	GlobalSection(SolutionProperties) = preSolution
++		HideSolutionNode = FALSE
++	EndGlobalSection
++	GlobalSection(ExtensibilityGlobals) = postSolution
++		SolutionGuid = {4B5A26C9-68C1-49D9-9F32-AF907A1730C2}
++	EndGlobalSection
++EndGlobal
+diff --git a/Mc2.CrudTestSelect.sln b/Mc2.CrudTestSelect.sln
+index f1c857d..a241843 100644
+--- a/Mc2.CrudTestSelect.sln
++++ b/Mc2.CrudTestSelect.sln
+@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mc2.CrudTest.Core.Applicati
+ EndProject
+ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mc2.Crud.Persistanse", "Mc2.Crud.Persistanse\Mc2.Crud.Persistanse.csproj", "{70E2BF54-3C98-4960-99B4-85D0988EDAA9}"
+ EndProject
+-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MC2.Crud.Infrastructure", "MC2.Crud.Infrastructure\MC2.Crud.Infrastructure.csproj", "{AFD0A592-C19C-4FD4-8EBB-FE42AD3BA841}"
++Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MC2.Crud.Infrastructure", "MC2.Crud.Infrastructure\MC2.Crud.Infrastructure.csproj", "{AFD0A592-C19C-4FD4-8EBB-FE42AD3BA841}"
+ EndProject
+ Global
+ 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+diff --git a/Mc2.CrudTestSelect.sln.DotSettings b/Mc2.CrudTestSelect.sln.DotSettings
+deleted file mode 100644
+index 06b71d5..0000000
+--- a/Mc2.CrudTestSelect.sln.DotSettings
++++ /dev/null
+@@ -1,2 +0,0 @@
+-﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+-	<s:Boolean x:Key="/Default/CodeEditing/SuppressUninitializedWarningFix/Enabled/@EntryValue">False</s:Boolean></wpf:ResourceDictionary>
+\ No newline at end of file
+diff --git a/global.json b/global.json
+deleted file mode 100644
+index 36e1a9e..0000000
+--- a/global.json
++++ /dev/null
+@@ -1,7 +0,0 @@
+-{
+-  "sdk": {
+-    "version": "7.0.0",
+-    "rollForward": "latestMajor",
+-    "allowPrerelease": false
+-  }
+-}
+\ No newline at end of file

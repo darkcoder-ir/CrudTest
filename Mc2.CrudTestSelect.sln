@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mc2.CrudTest.Core.Applicati
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mc2.Crud.Persistanse", "Mc2.Crud.Persistanse\Mc2.Crud.Persistanse.csproj", "{70E2BF54-3C98-4960-99B4-85D0988EDAA9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MC2.Crud.Infrastructure", "MC2.Crud.Infrastructure\MC2.Crud.Infrastructure.csproj", "{AFD0A592-C19C-4FD4-8EBB-FE42AD3BA841}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MC2.Crud.Infrastructure", "MC2.Crud.Infrastructure\MC2.Crud.Infrastructure.csproj", "{AFD0A592-C19C-4FD4-8EBB-FE42AD3BA841}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
