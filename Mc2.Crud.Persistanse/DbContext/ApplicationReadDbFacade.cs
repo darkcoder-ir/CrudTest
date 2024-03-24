@@ -13,11 +13,36 @@ namespace Mc2.Crud.Persistanse.DbContexts
 {
     public class ApplicationReadDbFacade : IApplicationReadDbFacade, IDisposable
     {
-        private readonly IDbConnection connection;
+        private IDbConnection connection
+        {
+            get
+            {
+                if (connection == null)
+                {
+                    connection = new SqlConnection("");
+                    return connection;
+                }
+                if(connection.State!= ConnectionState.Open )
+                        connection.Open();
+                return connection;
+            }
+            set
+            {
+                connection = value;
+            }
+        }
 
         private bool disposedValue = false;
 
-        public ApplicationReadDbFacade(IConfiguration configuration) => connection = new SqlConnection(configuration.GetConnectionString("ApplicationReadDatabase"));
+        public ApplicationReadDbFacade(IConfiguration configuration)
+        {
+            if(connection== null)
+            connection =
+                new SqlConnection(configuration.GetConnectionString("ApplicationReadDatabase"));
+            if (connection.State != ConnectionState.Open)
+                connection.Open();
+            
+        }
 
         public void Dispose()
         {
@@ -46,6 +71,7 @@ namespace Mc2.Crud.Persistanse.DbContexts
 
                 disposedValue = true;
             }
+            connection.Dispose();
         }
     }
 }
